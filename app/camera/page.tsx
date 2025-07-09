@@ -24,12 +24,9 @@ interface DetectionHistory {
   id: string;
   timestamp: string;
   totalCount: number;
-  detections: DetectionBox[];
-  imageUrl: string;
 }
 
 export default function CameraPage() {
-  const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -63,36 +60,6 @@ export default function CameraPage() {
         id: '1',
         timestamp: '2024-01-15 14:30:25',
         totalCount: 12,
-        detections: [],
-        imageUrl: '/mock-bread-1.jpg'
-      },
-      {
-        id: '2',
-        timestamp: '2024-01-15 13:45:12',
-        totalCount: 8,
-        detections: [],
-        imageUrl: '/mock-bread-2.jpg'
-      },
-      {
-        id: '3',
-        timestamp: '2024-01-15 12:20:45',
-        totalCount: 15,
-        detections: [],
-        imageUrl: '/mock-bread-3.jpg'
-      },
-      {
-        id: '4',
-        timestamp: '2024-01-15 11:15:30',
-        totalCount: 6,
-        detections: [],
-        imageUrl: '/mock-bread-4.jpg'
-      },
-      {
-        id: '5',
-        timestamp: '2024-01-15 10:05:18',
-        totalCount: 9,
-        detections: [],
-        imageUrl: '/mock-bread-5.jpg'
       }
     ];
     setDetectionHistory(mockHistory);
@@ -144,10 +111,10 @@ export default function CameraPage() {
     setCurrentImage(imageData);
     
     // Auto-detect after capture
-    detectBread(imageData);
+    detectItem(imageData);
   }, [setCurrentImage]);
 
-  const detectBread = useCallback(async (imageData?: string) => {
+  const detectItem = useCallback(async (imageData?: string) => {
     const targetImage = imageData || capturedImage;
     if (!targetImage) return;
 
@@ -211,8 +178,6 @@ export default function CameraPage() {
         id: Date.now().toString(),
         timestamp: new Date().toLocaleString('ja-JP'),
         totalCount,
-        detections: detectionBoxes,
-        imageUrl: capturedImage || ''
       };
       
       setDetectionHistory(prev => [newEntry, ...prev]);
@@ -242,7 +207,7 @@ export default function CameraPage() {
       <header className="bg-gray-800 border-b border-gray-700 flex-shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14">
-            <h1 className="text-lg font-bold">パン検出</h1>
+            <h1 className="text-lg font-bold">Counting System</h1>
           </div>
         </div>
       </header>
@@ -250,7 +215,7 @@ export default function CameraPage() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Camera Section - Mobile Portrait Optimized */}
-        <div className="relative bg-black" style={{ aspectRatio: '9/16', maxHeight: '60vh' }}>
+        <div className="relative bg-black mx-auto w-full max-w-[500px]" style={{ aspectRatio: '4/3', maxHeight: '60vh' }}>
           <div className="absolute inset-0 flex items-center justify-center">
             {capturedImage ? (
               <div className="relative w-full h-full">
@@ -292,7 +257,7 @@ export default function CameraPage() {
               <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                 <div className="bg-gray-800 p-4 rounded-lg flex items-center space-x-3">
                   <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
-                  <span className="text-white font-medium text-sm">検出中...</span>
+                  <span className="text-white font-medium text-sm">detecting...</span>
                 </div>
               </div>
             )}
@@ -308,10 +273,10 @@ export default function CameraPage() {
               <CardContent className="p-3">
                 <div className="text-center">
                   <div className="text-xl font-bold text-blue-400 mb-1">
-                    合計: {totalCount}個
+                    Total: {totalCount} 
                   </div>
                   <div className="text-sm text-gray-300">
-                    Type: クロワッサン Qty: {totalCount}
+                    Type: Croissant  Qty: {totalCount}
                   </div>
                 </div>
               </CardContent>
@@ -324,13 +289,13 @@ export default function CameraPage() {
           <div className="p-3 border-b border-gray-700 flex-shrink-0">
             <div className="flex items-center">
               <Clock className="w-4 h-4 mr-2 text-gray-400" />
-              <h3 className="text-base font-medium text-white">今日の検出履歴</h3>
+              <h3 className="text-base font-medium text-white"> Today's detection history </h3>
             </div>
           </div>
           
           <div className="flex-1 overflow-y-auto p-3">
             {detectionHistory.length === 0 ? (
-              <p className="text-gray-400 text-center py-8 text-sm">検出履歴がありません</p>
+              <p className="text-gray-400 text-center py-8 text-sm"> No detection history </p>
             ) : (
               <div className="space-y-2">
                 {detectionHistory.map((entry) => (
@@ -343,7 +308,7 @@ export default function CameraPage() {
                         <Camera className="w-4 h-4 text-gray-400" />
                       </div>
                       <div>
-                        <div className="font-medium text-white text-sm">{entry.totalCount}個のパンを検出</div>
+                        <div className="font-medium text-white text-sm">Detected {entry.totalCount} pieces of item</div>
                         <div className="text-xs text-gray-400">{formatTime(entry.timestamp)}</div>
                       </div>
                     </div>

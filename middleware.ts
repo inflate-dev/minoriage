@@ -9,6 +9,7 @@ export async function middleware(req: NextRequest) {
   const {
     data: { session },
   } = await supabase.auth.getSession();
+  const url = req.nextUrl.clone();
 
   // Protected routes
   const protectedRoutes = ['/dashboard', '/camera', '/analytics'];
@@ -22,7 +23,7 @@ export async function middleware(req: NextRequest) {
   }
 
   // Redirect to dashboard if authenticated and trying to access login
-  if (req.nextUrl.pathname === '/login' && session) {
+  if ((req.nextUrl.pathname === '/login' || req.nextUrl.pathname === '/') && session) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 

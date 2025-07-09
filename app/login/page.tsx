@@ -16,24 +16,41 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isLogin, setIsLogin] = useState(true);
+  const [error, setError] = useState('');
   const router = useRouter();
   const setUser = useAppStore((state) => state.setUser);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setError('');
 
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      setUser(data.user);
-      toast.success('ログインに成功しました');
-      router.push('/dashboard');
+      // ✅ ログイン処理
+      const login = async () => {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ email, password }),
+        })
+        const result = await res.json();
+        const { session } = result;
+      
+        if (session) {
+          const { access_token, user } = session;
+          if (user) {
+            setUser({id: user.id, email: user.email, role: "member", token: access_token});
+          }
+          router.replace('/camera'); // ←ここでリダイレクト
+        } else {
+          console.error('ログイン失敗', result)
+          setError("ログインに失敗しました.\nユーザー名かパスワードが違います");
+        }
+      }
+      login();
     } catch (error: any) {
       toast.error(error.message || 'ログインに失敗しました');
     } finally {
@@ -63,31 +80,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleDemoLogin = async () => {
-    setLoading(true);
-    
-    try {
-      // デモアカウントの情報を設定
-      const demoUser = {
-        id: 'demo-user-123',
-        email: 'demo@breadfactory.com',
-        user_metadata: {
-          name: 'デモユーザー'
-        },
-        created_at: new Date().toISOString()
-      };
-
-      // デモユーザーとして状態を設定
-      setUser(demoUser);
-      toast.success('デモアカウントでログインしました');
-      router.push('/dashboard');
-    } catch (error: any) {
-      toast.error('デモログインに失敗しました');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
@@ -101,7 +93,7 @@ export default function LoginPage() {
             Bread Factory
           </CardTitle>
           <CardDescription>
-            パン工場管理システムにログインしてください
+            Pashtte Counting Systemにログインしてください
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -185,25 +177,6 @@ export default function LoginPage() {
               </form>
             </TabsContent>
           </Tabs>
-
-          {/* Demo Login Button */}
-          <div className="mt-6 pt-6 border-t border-gray-200">
-            <div className="text-center mb-3">
-              <p className="text-sm text-gray-600">または</p>
-            </div>
-            <Button 
-              onClick={handleDemoLogin}
-              variant="outline" 
-              className="w-full border-blue-200 text-blue-700 hover:bg-blue-50"
-              disabled={loading}
-            >
-              <User className="w-4 h-4 mr-2" />
-              デモアカウントでログイン
-            </Button>
-            <p className="text-xs text-gray-500 text-center mt-2">
-              実際のアカウント作成なしでシステムを体験できます
-            </p>
-          </div>
         </CardContent>
       </Card>
     </div>
