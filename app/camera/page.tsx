@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { toast } from 'sonner';
 import { Camera, RotateCcw, Save, Loader2, Eye, Clock } from 'lucide-react';
+
+
+const SERVER_URL = "https://api.aicounter.net"; // local server api
 
 interface DetectionBox {
   type: string;
@@ -70,8 +72,6 @@ export default function CameraPage() {
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { 
           facingMode: 'environment',
-          width: { ideal: 720 },
-          height: { ideal: 1280 }
         }
       });
       
@@ -80,7 +80,7 @@ export default function CameraPage() {
         setIsStreaming(true);
       }
     } catch (error) {
-      toast.error('カメラの起動に失敗しました');
+      toast.error('Failed to start camera');
       console.error('Camera error:', error);
     }
   }, []);
@@ -93,7 +93,27 @@ export default function CameraPage() {
     }
   }, []);
 
-  const captureImage = useCallback(() => {
+  const sendToLocalServer = async (imageDataUrl: string) => {
+    const blob = await (await fetch(imageDataUrl)).blob();
+    const formData = new FormData();
+    formData.append('image', blob, 'captured.jpg');
+  
+    try {
+      const res = await fetch(`${SERVER_URL}/upload`, {
+        method: 'POST',
+        body: formData
+      });
+  
+      const result = await res.json();
+      console.log('📬 Response from local server:', result);
+      return result;
+    } catch (err) {
+      console.error('❌ Failed to send image to local server:', err);
+      return null;
+    }
+  };
+
+  const captureImage = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
@@ -102,47 +122,57 @@ export default function CameraPage() {
 
     if (!context) return;
 
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0);
+    const videoWidth = video.videoWidth;
+    const videoHeight = video.videoHeight;
+    
+    const size = Math.max(videoWidth, videoHeight);
+    const scale = Math.min(videoWidth, videoHeight) / size;
+  
+    const drawWidth = videoWidth * scale;
+    const drawHeight = videoHeight * scale;
+  
+    canvas.width = drawWidth;
+    canvas.height = drawHeight;
+  
+    // 描画開始（左上からでOK）
+    context.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, drawWidth, drawHeight);
+  
 
     const imageData = canvas.toDataURL('image/jpeg', 0.8);
     setCapturedImage(imageData);
     setCurrentImage(imageData);
+
+    // send to local
+    const result = await sendToLocalServer(imageData);
     
     // Auto-detect after capture
-    detectItem(imageData);
+    if (result) await detectItem(result, imageData);
   }, [setCurrentImage]);
 
-  const detectItem = useCallback(async (imageData?: string) => {
+  const detectItem = useCallback(async (result:any, imageData?: string) => {
     const targetImage = imageData || capturedImage;
-    if (!targetImage) return;
+    if (!targetImage || !result.items) return;
 
     setIsDetecting(true);
     
     try {
+      const detectionBoxes: DetectionBox[] = result.items.map((item: any) => ({
+        type: item.label || 'Unknown',
+        confidence: 1.0, // 信頼度が無ければ仮で100%
+        bbox: {
+          x: item.box[0],
+          y: item.box[1],
+          width: item.box[2] - item.box[0],
+          height: item.box[3] - item.box[1]
+        }
+      }));
       // Simulate API call to object detection service
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       // Mock detection results based on the reference image
-      const mockDetections: DetectionBox[] = [
-        { type: 'クロワッサン', confidence: 0.95, bbox: { x: 50, y: 80, width: 80, height: 60 } },
-        { type: 'クロワッサン', confidence: 0.92, bbox: { x: 150, y: 80, width: 80, height: 60 } },
-        { type: 'クロワッサン', confidence: 0.88, bbox: { x: 250, y: 80, width: 80, height: 60 } },
-        { type: 'クロワッサン', confidence: 0.94, bbox: { x: 50, y: 160, width: 80, height: 60 } },
-        { type: 'クロワッサン', confidence: 0.89, bbox: { x: 150, y: 160, width: 80, height: 60 } },
-        { type: 'クロワッサン', confidence: 0.93, bbox: { x: 250, y: 160, width: 80, height: 60 } },
-        { type: 'クロワッサン', confidence: 0.87, bbox: { x: 50, y: 240, width: 80, height: 60 } },
-        { type: 'クロワッサン', confidence: 0.91, bbox: { x: 150, y: 240, width: 80, height: 60 } },
-        { type: 'クロワッサン', confidence: 0.96, bbox: { x: 250, y: 240, width: 80, height: 60 } },
-        { type: 'クロワッサン', confidence: 0.85, bbox: { x: 50, y: 320, width: 80, height: 60 } },
-        { type: 'クロワッサン', confidence: 0.90, bbox: { x: 150, y: 320, width: 80, height: 60 } },
-        { type: 'クロワッサン', confidence: 0.86, bbox: { x: 250, y: 320, width: 80, height: 60 } }
-      ];
-      
-      setDetectionBoxes(mockDetections);
-      setTotalCount(mockDetections.length);
-      setDetectionResults(mockDetections.map((det, idx) => ({
+      setDetectionBoxes(detectionBoxes);
+      setTotalCount(detectionBoxes.length);
+      setDetectionResults(detectionBoxes.map((det, idx) => ({
         id: `det-${idx}`,
         type: det.type,
         quantity: 1,
@@ -150,9 +180,9 @@ export default function CameraPage() {
         bbox: det.bbox
       })));
       
-      toast.success(`${mockDetections.length}個のパンを検出しました`);
+      toast.success(`${detectionBoxes.length} item(s) detected`);
     } catch (error) {
-      toast.error('検出に失敗しました');
+      toast.error('Detection failed');
       console.error('Detection error:', error);
     } finally {
       setIsDetecting(false);
@@ -168,7 +198,7 @@ export default function CameraPage() {
 
   const saveResults = useCallback(async () => {
     if (detectionBoxes.length === 0) {
-      toast.error('保存する検出結果がありません');
+      toast.error('No detection results to sav');
       return;
     }
 
@@ -176,12 +206,12 @@ export default function CameraPage() {
       // Create new history entry
       const newEntry: DetectionHistory = {
         id: Date.now().toString(),
-        timestamp: new Date().toLocaleString('ja-JP'),
+        timestamp: new Date().toLocaleString('en-US'),
         totalCount,
       };
       
       setDetectionHistory(prev => [newEntry, ...prev]);
-      toast.success('検出結果を保存しました');
+      toast.success('Detection results saved');
       
       // Reset for next detection
       setCapturedImage(null);
@@ -189,13 +219,13 @@ export default function CameraPage() {
       setTotalCount(0);
       startCamera();
     } catch (error) {
-      toast.error('保存に失敗しました');
+      toast.error('Failed to save detection results');
       console.error('Save error:', error);
     }
   }, [detectionBoxes, totalCount, capturedImage, startCamera]);
 
   const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString('ja-JP', {
+    return new Date(timestamp).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit'
     });
@@ -215,7 +245,7 @@ export default function CameraPage() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Camera Section - Mobile Portrait Optimized */}
-        <div className="relative bg-black mx-auto w-full max-w-[500px]" style={{ aspectRatio: '4/3', maxHeight: '60vh' }}>
+        <div className="relative bg-black mx-auto w-full max-w-[400px]" style={{ aspectRatio: '1/1'}}>
           <div className="absolute inset-0 flex items-center justify-center">
             {capturedImage ? (
               <div className="relative w-full h-full">
@@ -284,6 +314,42 @@ export default function CameraPage() {
           </div>
         )}
 
+        {/* Controls - Always at Bottom */}
+        <div className="p-3  flex-shrink-0">
+          <div className="flex justify-center space-x-3">
+            <Button
+              onClick={captureImage}
+              size="sm"
+              className="bg-blue-600 hover:bg-blue-700 px-4"
+              disabled={!isStreaming || isDetecting}
+            >
+              <Camera className="w-4 h-4 mr-1" />
+              Capture
+            </Button>
+            
+            <Button
+              onClick={retryCapture}
+              size="sm"
+              variant="outline"
+              className="border-gray-600 text-gray-300 hover:bg-gray-700 px-4"
+              disabled={isDetecting}
+            >
+              <RotateCcw className="w-4 h-4 mr-1" />
+              Retry
+            </Button>
+            
+            <Button
+              onClick={saveResults}
+              size="sm"
+              className="bg-green-600 hover:bg-green-700 px-4"
+              disabled={detectionBoxes.length === 0 || isDetecting}
+            >
+              <Save className="w-4 h-4 mr-1" />
+              Save
+            </Button>
+          </div>
+        </div>
+
         {/* History Section - Scrollable */}
         <div className="flex-1 bg-gray-800 border-t border-gray-700 overflow-hidden flex flex-col min-h-0">
           <div className="p-3 border-b border-gray-700 flex-shrink-0">
@@ -326,41 +392,6 @@ export default function CameraPage() {
           </div>
         </div>
 
-        {/* Controls - Always at Bottom */}
-        <div className="p-3 bg-gray-800 border-t border-gray-700 flex-shrink-0">
-          <div className="flex justify-center space-x-3">
-            <Button
-              onClick={captureImage}
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 px-4"
-              disabled={!isStreaming || isDetecting}
-            >
-              <Camera className="w-4 h-4 mr-1" />
-              Capture
-            </Button>
-            
-            <Button
-              onClick={retryCapture}
-              size="sm"
-              variant="outline"
-              className="border-gray-600 text-gray-300 hover:bg-gray-700 px-4"
-              disabled={isDetecting}
-            >
-              <RotateCcw className="w-4 h-4 mr-1" />
-              Retry
-            </Button>
-            
-            <Button
-              onClick={saveResults}
-              size="sm"
-              className="bg-green-600 hover:bg-green-700 px-4"
-              disabled={detectionBoxes.length === 0 || isDetecting}
-            >
-              <Save className="w-4 h-4 mr-1" />
-              Save
-            </Button>
-          </div>
-        </div>
       </main>
 
       <BottomNavigation />

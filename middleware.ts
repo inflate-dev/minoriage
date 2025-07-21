@@ -24,7 +24,7 @@ export async function middleware(req: NextRequest) {
 
   // Redirect to dashboard if authenticated and trying to access login
   if ((req.nextUrl.pathname === '/login' || req.nextUrl.pathname === '/') && session) {
-    return NextResponse.redirect(new URL('/dashboard', req.url));
+    return NextResponse.redirect(new URL('/camera', req.url));
   }
 
   return res;

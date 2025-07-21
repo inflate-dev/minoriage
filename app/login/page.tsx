@@ -46,8 +46,8 @@ export default function LoginPage() {
           }
           router.replace('/camera'); // ←ここでリダイレクト
         } else {
-          console.error('ログイン失敗', result)
-          setError("ログインに失敗しました.\nユーザー名かパスワードが違います");
+          console.error('Login failed', result)
+          setError("Login failed.\nUsername or password is incorrect");
         }
       }
       login();
@@ -70,11 +70,11 @@ export default function LoginPage() {
 
       if (error) throw error;
 
-      toast.success('アカウントが作成されました');
+      toast.success('Account created successfully');
       setUser(data.user);
       router.push('/dashboard');
     } catch (error: any) {
-      toast.error(error.message || 'アカウント作成に失敗しました');
+      toast.error(error.message || 'Account creation failed');
     } finally {
       setLoading(false);
     }
@@ -90,23 +90,23 @@ export default function LoginPage() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">
-            Bread Factory
+            Item Counting System
           </CardTitle>
           <CardDescription>
-            Pashtte Counting Systemにログインしてください
+            Please log in to the Item Counting System.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">ログイン</TabsTrigger>
-              <TabsTrigger value="signup">新規登録</TabsTrigger>
+              <TabsTrigger value="login">Login</TabsTrigger>
+              <TabsTrigger value="signup">Signup</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">メールアドレス</Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
                     type="email"
@@ -117,11 +117,11 @@ export default function LoginPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">パスワード</Label>
+                  <Label htmlFor="password">Password</Label>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="パスワードを入力"
+                    placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -131,10 +131,10 @@ export default function LoginPage() {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      ログイン中...
+                      Logging in...
                     </>
                   ) : (
-                    'ログイン'
+                    'Login'
                   )}
                 </Button>
               </form>
@@ -143,7 +143,7 @@ export default function LoginPage() {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">メールアドレス</Label>
+                  <Label htmlFor="signup-email">Email</Label>
                   <Input
                     id="signup-email"
                     type="email"
@@ -154,11 +154,11 @@ export default function LoginPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">パスワード</Label>
+                  <Label htmlFor="signup-password">Password</Label>
                   <Input
                     id="signup-password"
                     type="password"
-                    placeholder="パスワードを入力"
+                    placeholder="Enter your password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -168,10 +168,10 @@ export default function LoginPage() {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      作成中...
+                      Creating...
                     </>
                   ) : (
-                    'アカウント作成'
+                    'Create Account'
                   )}
                 </Button>
               </form>

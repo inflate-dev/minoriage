@@ -6,22 +6,22 @@ import { cn } from '@/lib/utils';
 
 const navigationItems = [
   {
-    name: 'パン検出',
+    name: 'Item Detection',
     href: '/camera',
     icon: Camera,
   },
   {
-    name: 'ダッシュボード',
+    name: 'Dashboard',
     href: '/dashboard',
     icon: BarChart3,
   },
   {
-    name: '設定',
+    name: 'Settings',
     href: '/settings',
     icon: Settings,
   },
   {
-    name: 'アカウント',
+    name: 'Account',
     href: '/account',
     icon: User,
   },
