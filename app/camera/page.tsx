@@ -22,6 +22,11 @@ interface DetectionBox {
   };
 }
 
+interface TotalDetction {
+  type: string;
+  count: number;
+}
+
 interface DetectionHistory {
   id: string;
   timestamp: string;
@@ -57,14 +62,14 @@ export default function CameraPage() {
 
   const loadHistory = () => {
     // Mock history data - in real app, load from database
-    const mockHistory: DetectionHistory[] = [
-      {
-        id: '1',
-        timestamp: '2024-01-15 14:30:25',
-        totalCount: 12,
-      }
-    ];
-    setDetectionHistory(mockHistory);
+    //const mockHistory: DetectionHistory[] = [
+    // {
+    //    id: '1',
+    //    timestamp: '2024-01-15 14:30:25',
+    //    totalCount: 12,
+    //  }
+    //];
+    //setDetectionHistory(mockHistory);
   };
 
   const startCamera = useCallback(async () => {
@@ -97,6 +102,8 @@ export default function CameraPage() {
     const blob = await (await fetch(imageDataUrl)).blob();
     const formData = new FormData();
     formData.append('image', blob, 'captured.jpg');
+    formData.append('company', 'ABC_Corp');
+    formData.append('user', 'test');
   
     try {
       const res = await fetch(`${SERVER_URL}/upload`, {
@@ -231,13 +238,19 @@ export default function CameraPage() {
     });
   };
 
+  const countsByType = detectionBoxes.reduce((acc, box) => {
+    const type = box.type;
+    acc[type] = (acc[type] || 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+
   return (
     <div className="min-h-screen bg-gray-900 text-white pb-20 flex flex-col">
       {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700 flex-shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14">
-            <h1 className="text-lg font-bold">Counting System</h1>
+          <div className="flex items-center justify-center h-14">
+            <h1 className="text-lg font-bold text-white">Counting System</h1>
           </div>
         </div>
       </header>
@@ -245,7 +258,7 @@ export default function CameraPage() {
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Camera Section - Mobile Portrait Optimized */}
-        <div className="relative bg-black mx-auto w-full max-w-[400px]" style={{ aspectRatio: '1/1'}}>
+        <div className="relative bg-black mx-auto w-full max-w-[400px] p-2 rounded-md" style={{ aspectRatio: '1/1'}}>
           <div className="absolute inset-0 flex items-center justify-center">
             {capturedImage ? (
               <div className="relative w-full h-full">
@@ -306,11 +319,20 @@ export default function CameraPage() {
                     Total: {totalCount} 
                   </div>
                   <div className="text-sm text-gray-300">
-                    Type: Croissant  Qty: {totalCount}
+                    {Object.entries(countsByType).map(([type, count]) => (
+                      <div key={type}>
+                        Type: {type}  Qty: {count}
+                      </div>
+                    ))}
                   </div>
                 </div>
               </CardContent>
             </Card>
+          </div>
+        )}
+        {totalCount == 0 && (
+          <div className="p-3 text-center text-gray-400 text-sm">
+            No detections
           </div>
         )}
 
