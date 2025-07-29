@@ -7,9 +7,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { toast } from 'sonner';
 import { Camera, RotateCcw, Save, Loader2, Eye, Clock } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
 
 
 const SERVER_URL = "https://api.aicounter.net"; // local server api
+const DEBUG_MODE = false;
 
 interface DetectionBox {
   type: string;
@@ -31,9 +33,11 @@ interface DetectionHistory {
   id: string;
   timestamp: string;
   totalCount: number;
+  typeCounts: { [type: string]: number }; 
 }
 
 export default function CameraPage() {
+  const user = useAppStore(state => state.user);
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -60,16 +64,54 @@ export default function CameraPage() {
     };
   }, []);
 
-  const loadHistory = () => {
-    // Mock history data - in real app, load from database
-    //const mockHistory: DetectionHistory[] = [
-    // {
-    //    id: '1',
-    //    timestamp: '2024-01-15 14:30:25',
-    //    totalCount: 12,
-    //  }
-    //];
-    //setDetectionHistory(mockHistory);
+  const loadHistory = async  () => {
+    // 今日の00:00:00をISO文字列で作成（UTC対応）
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayStartISO = todayStart.toISOString();
+
+    const { data, error } = await supabase
+    .from('detections')
+    .select(`
+      upload_id,
+      object_type,
+      bbox,
+      created_at
+    `)
+    .gte('created_at', todayStartISO) 
+    .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error('❌ Failed to load detection history:', error.message);
+      return;
+    }
+
+    if (!data) return;
+
+    // upload_id ごとにまとめて、bboxの合計数をカウント
+    const grouped = data.reduce((acc, row) => {
+      const id = row.upload_id;
+  
+      if (!acc[id]) {
+        acc[id] = {
+          id,
+          timestamp: row.created_at,
+          totalCount: 0,
+          typeCounts: {} as Record<string, number>
+        };
+      }
+  
+      const count = Array.isArray(row.bbox) ? row.bbox.length : 0;
+      acc[id].totalCount += count;
+  
+      const label = row.object_type || 'unknown';
+      acc[id].typeCounts[label] = (acc[id].typeCounts[label] || 0) + count;
+  
+      return acc;
+    }, {} as Record<string, DetectionHistory>);
+
+    const history = Object.values(grouped);
+    setDetectionHistory(history);
   };
 
   const startCamera = useCallback(async () => {
@@ -102,8 +144,8 @@ export default function CameraPage() {
     const blob = await (await fetch(imageDataUrl)).blob();
     const formData = new FormData();
     formData.append('image', blob, 'captured.jpg');
-    formData.append('company', 'ABC_Corp');
-    formData.append('user', 'test');
+    formData.append('company', user?.company || 'e407c2d2-19e1-4e4e-b973-f349772edf0a');
+    formData.append('user', user?.id || '279af390-d2b0-4222-bb78-cc680ac5a9a8');
   
     try {
       const res = await fetch(`${SERVER_URL}/upload`, {
@@ -120,7 +162,7 @@ export default function CameraPage() {
     }
   };
 
-  const captureImage = useCallback(async () => {
+  const captureImageNormal = useCallback(async () => {
     if (!videoRef.current || !canvasRef.current) return;
 
     const canvas = canvasRef.current;
@@ -132,20 +174,25 @@ export default function CameraPage() {
     const videoWidth = video.videoWidth;
     const videoHeight = video.videoHeight;
     
-    const size = Math.max(videoWidth, videoHeight);
-    const scale = Math.min(videoWidth, videoHeight) / size;
-  
-    const drawWidth = videoWidth * scale;
-    const drawHeight = videoHeight * scale;
-  
-    canvas.width = drawWidth;
-    canvas.height = drawHeight;
-  
-    // 描画開始（左上からでOK）
-    context.drawImage(video, 0, 0, videoWidth, videoHeight, 0, 0, drawWidth, drawHeight);
-  
+    // 正方形クロップサイズと開始位置を計算（中心から）
+    const squareSize = Math.min(videoWidth, videoHeight);
+    const startX = (videoWidth - squareSize) / 2;
+    const startY = (videoHeight - squareSize) / 2;
 
-    const imageData = canvas.toDataURL('image/jpeg', 0.8);
+    const exportSize = 600; // ← 送る画像のサイズ
+
+    // canvasサイズは送信用に600x600に！
+    canvas.width = exportSize;
+    canvas.height = exportSize;
+
+    // クロップした範囲をcanvasに描画
+    context.drawImage(
+      video,
+      startX, startY, squareSize, squareSize, // クロップ元
+      0, 0, exportSize, exportSize            // 描画先
+    );
+  
+    const imageData = canvas.toDataURL('image/jpeg', 0.9);
     setCapturedImage(imageData);
     setCurrentImage(imageData);
 
@@ -156,21 +203,51 @@ export default function CameraPage() {
     if (result) await detectItem(result, imageData);
   }, [setCurrentImage]);
 
+  const captureImageDebug = useCallback(async () => {
+    // ★ ローカルファイルを直接fetch！
+    const testImageUrl = '/drian.jpg';
+  
+    const response = await fetch(testImageUrl);
+    const blob = await response.blob();
+  
+    // blobからdataURLに変換（UIにも表示するなら）
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const imageData = reader.result as string;
+  
+      setCapturedImage(imageData);
+      setCurrentImage(imageData);
+  
+      // send to local
+      const result = await sendToLocalServer(imageData);
+      if (result) await detectItem(result, imageData);
+    };
+    reader.readAsDataURL(blob);
+  }, [setCurrentImage]);
+
+  const captureImage = useCallback(() => {
+    setIsDetecting(true);
+    if (DEBUG_MODE) {
+      captureImageDebug();
+    } else {
+      captureImageNormal();
+    }
+  }, [DEBUG_MODE, captureImageDebug, captureImageNormal]);
+
   const detectItem = useCallback(async (result:any, imageData?: string) => {
     const targetImage = imageData || capturedImage;
     if (!targetImage || !result.items) return;
 
-    setIsDetecting(true);
     
     try {
       const detectionBoxes: DetectionBox[] = result.items.map((item: any) => ({
         type: item.label || 'Unknown',
         confidence: 1.0, // 信頼度が無ければ仮で100%
         bbox: {
-          x: item.box[0],
-          y: item.box[1],
-          width: item.box[2] - item.box[0],
-          height: item.box[3] - item.box[1]
+          x: (item.box[0] + item.box[2]) / 2 * (2 / 3), // 600x600から400x400に変換
+          y: (item.box[1] + item.box[3]) / 2 * (2 / 3),
+          width: (item.box[2] - item.box[0]) * (2 / 3),
+          height: (item.box[3] - item.box[1]) * (2 / 3)
         }
       }));
       // Simulate API call to object detection service
@@ -210,11 +287,17 @@ export default function CameraPage() {
     }
 
     try {
+      const typeCounts = detectionBoxes.reduce((acc, box) => {
+        acc[box.type] = (acc[box.type] || 0) + 1;
+        return acc;
+      }, {} as Record<string, number>);
+
       // Create new history entry
       const newEntry: DetectionHistory = {
         id: Date.now().toString(),
         timestamp: new Date().toLocaleString('en-US'),
         totalCount,
+        typeCounts,
       };
       
       setDetectionHistory(prev => [newEntry, ...prev]);
@@ -271,12 +354,11 @@ export default function CameraPage() {
                 {detectionBoxes.map((box, index) => (
                   <div
                     key={index}
-                    className="absolute border-2 border-red-500"
+                    className="absolute w-3 h-3 rounded-full bg-red-500"
                     style={{
-                      left: `${(box.bbox.x / 400) * 100}%`,
-                      top: `${(box.bbox.y / 400) * 100}%`,
-                      width: `${(box.bbox.width / 400) * 100}%`,
-                      height: `${(box.bbox.height / 400) * 100}%`,
+                      left: `${(box.bbox.x / 400 ) * 100}%`,
+                      top: `${(box.bbox.y /400 ) * 100}%`,
+                      transform: 'translate(-50%, -50%)',
                     }}
                   >
                     <div className="bg-red-500 text-white text-xs px-1 py-0.5 absolute -top-5 left-0 whitespace-nowrap text-[10px]">
@@ -311,23 +393,20 @@ export default function CameraPage() {
 
         {/* Results Display */}
         {totalCount > 0 && (
-          <div className="p-3 bg-gray-800 border-t border-gray-700 flex-shrink-0">
-            <Card className="bg-gray-700 border-gray-600">
-              <CardContent className="p-3">
-                <div className="text-center">
-                  <div className="text-xl font-bold text-blue-400 mb-1">
-                    Total: {totalCount} 
+          <div className="w-full flex justify-center mt-4">
+            <div className="bg-gray-700 text-white rounded-lg shadow-md p-4 w-full max-w-sm">
+              <div className="text-xl font-bold text-blue-400 mb-2 text-center">
+                Total: {totalCount}
+              </div>
+              <div className="text-sm text-gray-300 text-center">
+                {Object.entries(countsByType).map(([type, count]) => (
+                  <div key={type} className="flex justify-center gap-6 px-2 text-base">
+                    <span>Type: {type}</span>
+                    <span>Qty: {count}</span>
                   </div>
-                  <div className="text-sm text-gray-300">
-                    {Object.entries(countsByType).map(([type, count]) => (
-                      <div key={type}>
-                        Type: {type}  Qty: {count}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                ))}
+              </div>
+            </div>
           </div>
         )}
         {totalCount == 0 && (
@@ -373,46 +452,40 @@ export default function CameraPage() {
         </div>
 
         {/* History Section - Scrollable */}
-        <div className="flex-1 bg-gray-800 border-t border-gray-700 overflow-hidden flex flex-col min-h-0">
-          <div className="p-3 border-b border-gray-700 flex-shrink-0">
-            <div className="flex items-center">
+        <div className="w-full flex justify-center mt-6">
+          <div className="w-full max-w-md">
+            {/* Header */}
+            <div className="flex items-center text-gray-400 text-sm border-b border-gray-700 pb-2 mb-2">
               <Clock className="w-4 h-4 mr-2 text-gray-400" />
               <h3 className="text-base font-medium text-white"> Today's detection history </h3>
             </div>
-          </div>
           
-          <div className="flex-1 overflow-y-auto p-3">
+            {/* Empty state */}
             {detectionHistory.length === 0 ? (
-              <p className="text-gray-400 text-center py-8 text-sm"> No detection history </p>
+              <p className="text-gray-500 text-sm text-center">No detection history</p>
             ) : (
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {detectionHistory.map((entry) => (
                   <div
                     key={entry.id}
-                    className="flex items-center justify-between p-3 bg-gray-700 rounded-lg"
+                    className="bg-gray-700 rounded-md p-3 text-sm text-gray-200 shadow-sm"
                   >
-                    <div className="flex items-center space-x-3">
-                      <div className="w-8 h-8 bg-gray-600 rounded-lg flex items-center justify-center">
-                        <Camera className="w-4 h-4 text-gray-400" />
-                      </div>
-                      <div>
-                        <div className="font-medium text-white text-sm">Detected {entry.totalCount} pieces of item</div>
-                        <div className="text-xs text-gray-400">{formatTime(entry.timestamp)}</div>
-                      </div>
+                    <div className="font-semibold text-blue-400">
+                      {formatTime(entry.timestamp)}
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="border-gray-600 text-gray-300 hover:bg-gray-600 h-8 w-8 p-0"
-                    >
-                      <Eye className="w-3 h-3" />
-                    </Button>
+                    <div>Total: {entry.totalCount}</div>
+                    {Object.entries(entry.typeCounts).map(([type, count]) => (
+                      <div key={type} className="flex justify-between text-sm">
+                        <span>Type: {type}</span>
+                        <span>Qty: {count}</span>
+                      </div>
+                    ))}
                   </div>
                 ))}
               </div>
             )}
+            </div>
           </div>
-        </div>
 
       </main>
 

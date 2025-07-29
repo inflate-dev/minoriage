@@ -13,8 +13,16 @@ interface DetectionResult {
   };
 }
 
+interface User {
+  id: string;
+  email: string;
+  role: string;
+  token: string;
+  company: string;
+}
+
 interface AppState {
-  user: any;
+  user: User | null;
   detectionResults: DetectionResult[];
   currentImage: string | null;
   isDetecting: boolean;
@@ -24,7 +32,7 @@ interface AppState {
   setDetectionResults: (results: DetectionResult[]) => void;
   setCurrentImage: (image: string | null) => void;
   setIsDetecting: (detecting: boolean) => void;
-  setTotalBreadCount: (count: number) => void;
+  setTotalItemCount: (count: number) => void;
   clearDetection: () => void;
 }
 
@@ -39,7 +47,7 @@ export const useAppStore = create<AppState>((set) => ({
   setDetectionResults: (results) => set({ detectionResults: results }),
   setCurrentImage: (image) => set({ currentImage: image }),
   setIsDetecting: (detecting) => set({ isDetecting: detecting }),
-  setTotalBreadCount: (count) => set({ totalBreadCount: count }),
+  setTotalItemCount: (count) => set({ totalBreadCount: count }),
   clearDetection: () => set({ 
     detectionResults: [], 
     currentImage: null, 

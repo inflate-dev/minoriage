@@ -13,9 +13,39 @@ export async function POST(req: Request) {
     error,
   } = await supabase.auth.signInWithPassword({ email, password })
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 401 })
+
+  if (error || !session?.user) {
+    return NextResponse.json(
+      { error: error?.message || 'Login failed' },
+      { status: 401 }
+    )
   }
 
-  return NextResponse.json({ session })
+   const { data: profileData, error: profileError } = await supabase
+    .from('profiles')
+    .select(`
+      company_id,
+      company:companies (id, name)
+    `)
+    .eq('user_id', session.user.id)
+    .single()
+
+  if (profileError) {
+    return NextResponse.json(
+      { error: 'Failed to fetch profile info' },
+      { status: 500 }
+    )
+  }
+
+  return NextResponse.json({
+    session: {
+      access_token: session.access_token,
+      user: {
+        id: session.user.id,
+        email: session.user.email,
+        role: 'member',
+        company: profileData.company,
+      },
+    },
+  })
 }
