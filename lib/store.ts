@@ -19,6 +19,7 @@ interface User {
   role: string;
   token: string;
   company: string;
+  name?: string; // Optional field for user's name
 }
 
 interface AppState {

@@ -30,7 +30,7 @@ export default function AccountPage() {
   const router = useRouter();
   const { user, setUser } = useAppStore();
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(user?.user_metadata?.name || 'デモユーザー');
+  const [name, setName] = useState(user?.name || 'デモユーザー');
   const [email, setEmail] = useState(user?.email || 'demo@breadfactory.com');
 
   const handleSaveProfile = () => {
