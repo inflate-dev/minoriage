@@ -25,7 +25,8 @@ export async function POST(req: Request) {
     .from('profiles')
     .select(`
       company_id,
-      company:companies (id, name)
+      full_name,
+      created_at
     `)
     .eq('user_id', session.user.id)
     .single()
@@ -44,7 +45,9 @@ export async function POST(req: Request) {
         id: session.user.id,
         email: session.user.email,
         role: 'member',
-        company: profileData.company,
+        company: profileData.company_id || 'default_company',
+        name: profileData.full_name || 'User',
+        created_at: profileData.created_at || new Date().toISOString(),
       },
     },
   })

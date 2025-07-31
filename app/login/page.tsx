@@ -43,7 +43,8 @@ export default function LoginPage() {
           const { access_token, user } = session;
           if (user) {
             
-            setUser({id: user.id, email: user.email, role: user.role , token: access_token, company: user.company});
+            setUser({id: user.id, email: user.email, role: user.role , token: access_token, 
+              company: user.company, name: user.name, created_at: user.created_at});
           }
           router.replace('/camera'); // ←ここでリダイレクト
         } else {

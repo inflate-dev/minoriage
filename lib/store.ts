@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 
+type DetectionMode = 'api' | 'ref' | 'ai';
+
 interface DetectionResult {
   id: string;
   type: string;
@@ -20,6 +22,7 @@ interface User {
   token: string;
   company: string;
   name?: string; // Optional field for user's name
+  created_at?: string; // Optional field for account creation date
 }
 
 interface AppState {
@@ -28,6 +31,7 @@ interface AppState {
   currentImage: string | null;
   isDetecting: boolean;
   totalBreadCount: number;
+  detectionMode: DetectionMode; // Current detection mode
   
   setUser: (user: any) => void;
   setDetectionResults: (results: DetectionResult[]) => void;
@@ -35,6 +39,7 @@ interface AppState {
   setIsDetecting: (detecting: boolean) => void;
   setTotalItemCount: (count: number) => void;
   clearDetection: () => void;
+  setDetectionMode: (mode: DetectionMode) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -42,8 +47,9 @@ export const useAppStore = create<AppState>((set) => ({
   detectionResults: [],
   currentImage: null,
   isDetecting: false,
-  totalBreadCount: 0,
-  
+  totalBreadCount: 0,  
+  detectionMode: 'api', // Default detection mode
+
   setUser: (user) => set({ user }),
   setDetectionResults: (results) => set({ detectionResults: results }),
   setCurrentImage: (image) => set({ currentImage: image }),
@@ -55,4 +61,5 @@ export const useAppStore = create<AppState>((set) => ({
     isDetecting: false, 
     totalBreadCount: 0 
   }),
+  setDetectionMode: (mode: DetectionMode) => set({ detectionMode: mode})
 }));

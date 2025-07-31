@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/lib/store';
 import { supabase } from '@/lib/supabase';
@@ -30,12 +30,19 @@ export default function AccountPage() {
   const router = useRouter();
   const { user, setUser } = useAppStore();
   const [isEditing, setIsEditing] = useState(false);
-  const [name, setName] = useState(user?.name || 'デモユーザー');
+  const [name, setName] = useState(user?.name || 'User');
   const [email, setEmail] = useState(user?.email || 'demo@breadfactory.com');
+  const [company, setCompany] = useState(user?.company || 'Demo Company');
+
+  useEffect(() => {
+    setName(user?.name || 'User');
+    setEmail(user?.email || 'sample@email.com');
+    setCompany(user?.company || 'Demo Company');
+  }, [user, router]);
 
   const handleSaveProfile = () => {
     // Here you would update the user profile in Supabase
-    toast.success('プロフィールを更新しました');
+    toast.success('Profile updated successfully');
     setIsEditing(false);
   };
 
@@ -43,21 +50,16 @@ export default function AccountPage() {
     try {
       await supabase.auth.signOut();
       setUser(null);
-      toast.success('ログアウトしました');
+      toast.success('Logged out successfully');
       router.push('/login');
     } catch (error: any) {
-      toast.error('ログアウトに失敗しました');
+      toast.error('Failed to log out: ' + error.message);
     }
-  };
-
-  const handleExportData = () => {
-    // Here you would export user data
-    toast.success('データのエクスポートを開始しました');
   };
 
   const handleDeleteAccount = () => {
     // Here you would show a confirmation dialog and delete account
-    toast.error('アカウント削除機能は実装中です');
+    toast.error('Account deletion feature is under development');
   };
 
   return (
@@ -66,7 +68,7 @@ export default function AccountPage() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
-            <h1 className="text-xl font-bold text-gray-900">アカウント</h1>
+            <h1 className="text-xl font-bold text-gray-900">Account</h1>
           </div>
         </div>
       </header>
@@ -80,7 +82,7 @@ export default function AccountPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <User className="w-5 h-5 mr-2 text-blue-600" />
-                  <CardTitle>プロフィール</CardTitle>
+                  <CardTitle>Profile</CardTitle>
                 </div>
                 <Button
                   variant="outline"
@@ -90,12 +92,12 @@ export default function AccountPage() {
                   {isEditing ? (
                     <>
                       <Save className="w-4 h-4 mr-2" />
-                      保存
+                      Save
                     </>
                   ) : (
                     <>
                       <Edit3 className="w-4 h-4 mr-2" />
-                      編集
+                      Edit
                     </>
                   )}
                 </Button>
@@ -113,7 +115,7 @@ export default function AccountPage() {
                   {isEditing ? (
                     <div className="space-y-4">
                       <div>
-                        <Label htmlFor="name">名前</Label>
+                        <Label htmlFor="name">Name</Label>
                         <Input
                           id="name"
                           value={name}
@@ -121,7 +123,7 @@ export default function AccountPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="email">メールアドレス</Label>
+                        <Label htmlFor="email">Email</Label>
                         <Input
                           id="email"
                           type="email"
@@ -139,7 +141,7 @@ export default function AccountPage() {
                       </div>
                       <div className="flex items-center text-gray-600">
                         <Calendar className="w-4 h-4 mr-2" />
-                        登録日: 2024年1月15日
+                        Joined: {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                       </div>
                     </div>
                   )}
@@ -150,50 +152,17 @@ export default function AccountPage() {
                 <div className="flex space-x-2">
                   <Button onClick={handleSaveProfile} size="sm">
                     <Save className="w-4 h-4 mr-2" />
-                    保存
+                    Save
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm"
                     onClick={() => setIsEditing(false)}
                   >
-                    キャンセル
+                    Cancel
                   </Button>
                 </div>
               )}
-            </CardContent>
-          </Card>
-
-          {/* Usage Statistics */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center">
-                <BarChart3 className="w-5 h-5 mr-2 text-green-600" />
-                <CardTitle>利用統計</CardTitle>
-              </div>
-              <CardDescription>
-                あなたの利用状況
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="text-center p-4 bg-blue-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">247</div>
-                  <div className="text-sm text-gray-600">総検出回数</div>
-                </div>
-                <div className="text-center p-4 bg-green-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">1,523</div>
-                  <div className="text-sm text-gray-600">検出したパン数</div>
-                </div>
-                <div className="text-center p-4 bg-orange-50 rounded-lg">
-                  <div className="text-2xl font-bold text-orange-600">32</div>
-                  <div className="text-sm text-gray-600">利用日数</div>
-                </div>
-                <div className="text-center p-4 bg-purple-50 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">94%</div>
-                  <div className="text-sm text-gray-600">検出精度</div>
-                </div>
-              </div>
             </CardContent>
           </Card>
 
@@ -202,20 +171,20 @@ export default function AccountPage() {
             <CardHeader>
               <div className="flex items-center">
                 <Shield className="w-5 h-5 mr-2 text-red-600" />
-                <CardTitle>セキュリティ</CardTitle>
+                <CardTitle>Security</CardTitle>
               </div>
               <CardDescription>
-                アカウントのセキュリティ設定
+                Account security settings
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button variant="outline" className="w-full justify-start">
                 <Shield className="w-4 h-4 mr-2" />
-                パスワードを変更
+                Change password
               </Button>
               <Button variant="outline" className="w-full justify-start">
                 <Camera className="w-4 h-4 mr-2" />
-                二段階認証を設定
+                Set up 2FA
               </Button>
             </CardContent>
           </Card>
@@ -223,27 +192,19 @@ export default function AccountPage() {
           {/* Data Management */}
           <Card>
             <CardHeader>
-              <CardTitle>データ管理</CardTitle>
+              <CardTitle>Data Management</CardTitle>
               <CardDescription>
-                あなたのデータの管理とエクスポート
+                Manage and export your data
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start"
-                onClick={handleExportData}
-              >
-                <Download className="w-4 h-4 mr-2" />
-                データをエクスポート
-              </Button>
               <Button 
                 variant="outline" 
                 className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50"
                 onClick={handleDeleteAccount}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                アカウントを削除
+                Delete Account
               </Button>
             </CardContent>
           </Card>
@@ -257,7 +218,7 @@ export default function AccountPage() {
               className="w-full max-w-md text-red-600 border-red-200 hover:bg-red-50"
             >
               <LogOut className="w-4 h-4 mr-2" />
-              ログアウト
+              Log Out
             </Button>
           </div>
         </div>

@@ -38,6 +38,7 @@ interface DetectionHistory {
 
 export default function CameraPage() {
   const user = useAppStore(state => state.user);
+  const { detectionMode } = useAppStore();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -64,6 +65,7 @@ export default function CameraPage() {
     };
   }, []);
 
+  // Load today's detection history from Supabase
   const loadHistory = async  () => {
     // 今日の00:00:00をISO文字列で作成（UTC対応）
     const todayStart = new Date();
@@ -146,6 +148,7 @@ export default function CameraPage() {
     formData.append('image', blob, 'captured.jpg');
     formData.append('company', user?.company || 'e407c2d2-19e1-4e4e-b973-f349772edf0a');
     formData.append('user', user?.id || '279af390-d2b0-4222-bb78-cc680ac5a9a8');
+    formData.append('mode', detectionMode || 'api'); // 追加: モード情報を送信
   
     try {
       const res = await fetch(`${SERVER_URL}/upload`, {
@@ -351,7 +354,7 @@ export default function CameraPage() {
                   className="w-full h-full object-cover"
                 />
                 {/* Detection Boxes */}
-                {detectionBoxes.map((box, index) => (
+                {detectionMode === 'ai' && detectionBoxes.map((box, index) => (
                   <div
                     key={index}
                     className="absolute w-3 h-3 rounded-full bg-red-500"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -8,6 +8,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { useAppStore } from '@/lib/store';
+import { Plus } from 'lucide-react';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { toast } from 'sonner';
 import { 
@@ -25,17 +27,59 @@ import {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [notifications, setNotifications] = useState(true);
-  const [autoDetection, setAutoDetection] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
+  const { detectionMode, setDetectionMode } = useAppStore();
   const [highQuality, setHighQuality] = useState(true);
   const [autoSave, setAutoSave] = useState(true);
   const [detectionThreshold, setDetectionThreshold] = useState('0.8');
   const [maxDetections, setMaxDetections] = useState('50');
+  const [batteryLevel, setBatteryLevel] = useState(100);
+  const [connectionType, setConnectionType] = useState('wifi');
+  const [storageUsage, setStorageUsage] = useState('0MB / 0MB');
+  const [sampleImages, setSampleImages] = useState<string[]>([
+    '/sample1.jpg',
+    '/sample2.jpg'
+  ]);
 
   const handleSaveSettings = () => {
     // Here you would save settings to database or local storage
-    toast.success('設定を保存しました');
+    toast.success('Settings saved successfully');
+  };
+
+  useEffect(() => {
+    (navigator as any).getBattery?.().then((battery: any) => {
+      const level = Math.floor(battery.level * 100);
+      (level == null || level < 0 || level > 100) ? setBatteryLevel(100) :  setBatteryLevel(level);
+    });
+
+    const nav = navigator as any;
+    const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
+    if (connection) {
+      setConnectionType(connection.effectiveType); // 例: '4g', 'wifi'
+    }
+
+    navigator.storage?.estimate().then(({ usage, quota }) => {
+      if (usage !== undefined && quota !== undefined) {
+        const used = (usage / 1024 / 1024).toFixed(1);
+        const total = (quota / 1024 / 1024).toFixed(1);
+        setStorageUsage(`${used}MB / ${total}MB`);
+      } else {
+        setStorageUsage('Unavailable');
+      }
+    });
+
+  }, []);
+
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (reader.result) {
+        setSampleImages([...sampleImages, reader.result.toString()]);
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   return (
@@ -44,7 +88,7 @@ export default function SettingsPage() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
-            <h1 className="text-xl font-bold text-gray-900">設定</h1>
+            <h1 className="text-xl font-bold text-gray-900">Settings</h1>
           </div>
         </div>
       </header>
@@ -57,31 +101,96 @@ export default function SettingsPage() {
             <CardHeader>
               <div className="flex items-center">
                 <Camera className="w-5 h-5 mr-2 text-blue-600" />
-                <CardTitle>検出設定</CardTitle>
+                <CardTitle>Detection Settings</CardTitle>
               </div>
               <CardDescription>
-                パン検出機能の動作設定
+                Configure item detection functionality
               </CardDescription>
             </CardHeader>
+
+            {/* Mode Select */}
             <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col space-y-6">
                 <div className="space-y-0.5">
-                  <Label className="text-base">自動検出</Label>
+                  <Label className="text-base">Item Detection Mode</Label>
                   <div className="text-sm text-gray-600">
-                    撮影後に自動的に検出を開始
+                    Select a method for detecting and counting items from the captured image.
                   </div>
                 </div>
-                <Switch
-                  checked={autoDetection}
-                  onCheckedChange={setAutoDetection}
-                />
+                {/* API Mode */}
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="radio"
+                    id="api"
+                    name="detectionMode"
+                    value="api"
+                    checked={detectionMode === 'api'}
+                    onChange={() => setDetectionMode('api')}
+                    className="mt-1 form-radio text-blue-700"
+                  />
+                  <label htmlFor="api" className="text-lg font-medium">API Mode</label>
+                </div>
+
+                {/* ref Mode */}
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="radio"
+                    id="ref"
+                    name="detectionMode"
+                    value="ref"
+                    checked={detectionMode === 'ref'}
+                    onChange={() => setDetectionMode('ref')}
+                    className="mt-1 form-radio text-blue-700"
+                  />
+                  <label htmlFor="sample" className="text-lg font-medium">Reference Mode</label>
+                </div>
+                {/* Sample Images (only visible when sample mode is selected) */}
+                {detectionMode === 'ref' && (
+                  <div className="ml-6 mt-2 flex flex-wrap gap-4">
+                    {sampleImages.map((src, index) => (
+                      <img
+                        key={index}
+                        src={src}
+                        alt={`sample-${index}`}
+                        className="w-24 h-24 object-cover rounded border"
+                      />
+                    ))}
+                    <label
+                      htmlFor="upload"
+                      className="w-24 h-24 flex items-center justify-center border border-gray-400 rounded cursor-pointer"
+                    >
+                      <Plus className="w-6 h-6 text-gray-700" />
+                      <input
+                        id="upload"
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleImageUpload}
+                      />
+                    </label>
+                  </div>
+                )}
+                {/* AI Mode */}
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="radio"
+                    id="ai"
+                    name="detectionMode"
+                    value="ai"
+                    checked={detectionMode === 'ai'}
+                    onChange={() => setDetectionMode('ai')}
+                    className="mt-1 form-radio text-blue-700"
+                  />
+                  <label htmlFor="ai" className="text-lg font-medium">AI Mode</label>
+                </div>
               </div>
               
+              {/* Hight Quality Mode */}
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label className="text-base">高画質モード</Label>
+                  <Label className="text-base">High Accuracy Mode</Label>
                   <div className="text-sm text-gray-600">
-                    より正確な検出のため高解像度で撮影
+                    Capture in high resolution for more accurate results
                   </div>
                 </div>
                 <Switch
@@ -91,7 +200,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="threshold">検出閾値</Label>
+                <Label htmlFor="threshold">Threshold</Label>
                 <Input
                   id="threshold"
                   type="number"
@@ -103,12 +212,12 @@ export default function SettingsPage() {
                   className="w-full"
                 />
                 <div className="text-sm text-gray-600">
-                  検出の信頼度閾値（0.1-1.0）
+                  Confidence threshold for detections.1-1.0）
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="maxDetections">最大検出数</Label>
+                <Label htmlFor="maxDetections">Max Detections</Label>
                 <Input
                   id="maxDetections"
                   type="number"
@@ -119,7 +228,7 @@ export default function SettingsPage() {
                   className="w-full"
                 />
                 <div className="text-sm text-gray-600">
-                  1回の検出で処理する最大オブジェクト数
+                  Maximum number of item types to process per detection
                 </div>
               </div>
             </CardContent>
@@ -130,18 +239,18 @@ export default function SettingsPage() {
             <CardHeader>
               <div className="flex items-center">
                 <Database className="w-5 h-5 mr-2 text-green-600" />
-                <CardTitle>データ設定</CardTitle>
+                <CardTitle>Data Settings</CardTitle>
               </div>
               <CardDescription>
-                データの保存と同期設定
+                Manage data saving and sync options
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label className="text-base">自動保存</Label>
+                  <Label className="text-base">Auto Save</Label>
                   <div className="text-sm text-gray-600">
-                    検出結果を自動的にデータベースに保存
+                    Automatically save detection results to database
                   </div>
                 </div>
                 <Switch
@@ -151,76 +260,38 @@ export default function SettingsPage() {
               </div>
             </CardContent>
           </Card>
-
-          {/* Notification Settings */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center">
-                <Bell className="w-5 h-5 mr-2 text-orange-600" />
-                <CardTitle>通知設定</CardTitle>
-              </div>
-              <CardDescription>
-                アプリの通知とアラート設定
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-base">プッシュ通知</Label>
-                  <div className="text-sm text-gray-600">
-                    重要な更新やアラートを受信
-                  </div>
-                </div>
-                <Switch
-                  checked={notifications}
-                  onCheckedChange={setNotifications}
-                />
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-base">音声通知</Label>
-                  <div className="text-sm text-gray-600">
-                    検出完了時に音で通知
-                  </div>
-                </div>
-                <Switch
-                  checked={soundEnabled}
-                  onCheckedChange={setSoundEnabled}
-                />
-              </div>
-            </CardContent>
-          </Card>
-
+          
           {/* System Info */}
           <Card>
             <CardHeader>
               <div className="flex items-center">
                 <Smartphone className="w-5 h-5 mr-2 text-purple-600" />
-                <CardTitle>システム情報</CardTitle>
+                <CardTitle>System Info</CardTitle>
               </div>
               <CardDescription>
-                アプリとデバイスの状態
+                App and device status
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center space-x-2">
                   <Wifi className="w-4 h-4 text-green-500" />
-                  <span className="text-sm">接続状態: 良好</span>
+                  <span className="text-sm">Connection: {connectionType}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Battery className="w-4 h-4 text-green-500" />
-                  <span className="text-sm">バッテリー: 85%</span>
+                  <span className="text-sm">
+                    Battery: {batteryLevel !== null ? `${batteryLevel}%` : 'Loading...'}
+                  </span>
                 </div>
               </div>
               
               <Separator />
               
               <div className="space-y-2 text-sm text-gray-600">
-                <div>アプリバージョン: 1.0.0</div>
-                <div>最終同期: 2分前</div>
-                <div>ストレージ使用量: 2.3GB / 64GB</div>
+                <div>App Version: 1.0.0</div>
+                <div>Last Sync: 2 minutes ago</div>
+                <div>Storage Usage: {storageUsage}</div>
               </div>
             </CardContent>
           </Card>
@@ -229,7 +300,7 @@ export default function SettingsPage() {
           <div className="flex justify-center">
             <Button onClick={handleSaveSettings} size="lg" className="w-full max-w-md">
               <Save className="w-4 h-4 mr-2" />
-              設定を保存
+              Save Settings
             </Button>
           </div>
         </div>
