@@ -50,6 +50,7 @@ export default function AccountPage() {
     try {
       await supabase.auth.signOut();
       setUser(null);
+      localStorage.removeItem('user');
       toast.success('Logged out successfully');
       router.push('/login');
     } catch (error: any) {

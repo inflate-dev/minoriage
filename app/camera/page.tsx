@@ -10,7 +10,7 @@ import { Camera, RotateCcw, Save, Loader2, Eye, Clock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 
-const SERVER_URL = "https://api.aicounter.net"; // local server api
+const SERVER_URL = process.env.NEXT_PUBLIC_LOCAL_SERVER_URL; // local server api
 const DEBUG_MODE = false;
 
 interface DetectionBox {
@@ -148,7 +148,7 @@ export default function CameraPage() {
     formData.append('image', blob, 'captured.jpg');
     formData.append('company', user?.company || 'e407c2d2-19e1-4e4e-b973-f349772edf0a');
     formData.append('user', user?.id || '279af390-d2b0-4222-bb78-cc680ac5a9a8');
-    formData.append('mode', detectionMode || 'api'); // 追加: モード情報を送信
+    formData.append('mode', detectionMode || 'api');
   
     try {
       const res = await fetch(`${SERVER_URL}/upload`, {
@@ -208,7 +208,7 @@ export default function CameraPage() {
 
   const captureImageDebug = useCallback(async () => {
     // ★ ローカルファイルを直接fetch！
-    const testImageUrl = '/drian.jpg';
+    const testImageUrl = '/ref_sample2.jpg';
   
     const response = await fetch(testImageUrl);
     const blob = await response.blob();

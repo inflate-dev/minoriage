@@ -46,6 +46,7 @@ export default function LoginPage() {
             setUser({id: user.id, email: user.email, role: user.role , token: access_token, 
               company: user.company, name: user.name, created_at: user.created_at});
           }
+          //localStorage.setItem('user', JSON.stringify(user));
           router.replace('/camera'); // ←ここでリダイレクト
         } else {
           console.error('Login failed', result)

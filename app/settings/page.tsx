@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -12,6 +11,7 @@ import { useAppStore } from '@/lib/store';
 import { Plus } from 'lucide-react';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { toast } from 'sonner';
+import { supabase } from '@/lib/supabase';
 import { 
   Bell, 
   Camera, 
@@ -25,20 +25,19 @@ import {
   Save
 } from 'lucide-react';
 
+const SERVER_URL = process.env.NEXT_PUBLIC_LOCAL_SERVER_URL;
+
 export default function SettingsPage() {
-  const router = useRouter();
+  const user = useAppStore((state) => state.user);
   const { detectionMode, setDetectionMode } = useAppStore();
-  const [highQuality, setHighQuality] = useState(true);
+  const [highQuality, setHighQuality] = useState(false);
   const [autoSave, setAutoSave] = useState(true);
   const [detectionThreshold, setDetectionThreshold] = useState('0.8');
   const [maxDetections, setMaxDetections] = useState('50');
   const [batteryLevel, setBatteryLevel] = useState(100);
   const [connectionType, setConnectionType] = useState('wifi');
   const [storageUsage, setStorageUsage] = useState('0MB / 0MB');
-  const [sampleImages, setSampleImages] = useState<string[]>([
-    '/sample1.jpg',
-    '/sample2.jpg'
-  ]);
+  const [sampleImages, setSampleImages] = useState<string[]>([]);
 
   const handleSaveSettings = () => {
     // Here you would save settings to database or local storage
@@ -46,17 +45,20 @@ export default function SettingsPage() {
   };
 
   useEffect(() => {
+    // Fetch battery level
     (navigator as any).getBattery?.().then((battery: any) => {
       const level = Math.floor(battery.level * 100);
       (level == null || level < 0 || level > 100) ? setBatteryLevel(100) :  setBatteryLevel(level);
     });
 
+    // Get connection type
     const nav = navigator as any;
     const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
     if (connection) {
       setConnectionType(connection.effectiveType); // 例: '4g', 'wifi'
     }
 
+    // Estimate storage usage
     navigator.storage?.estimate().then(({ usage, quota }) => {
       if (usage !== undefined && quota !== undefined) {
         const used = (usage / 1024 / 1024).toFixed(1);
@@ -67,11 +69,79 @@ export default function SettingsPage() {
       }
     });
 
+    // Fetch user's profile image from Supabase
+    if (!user) return;
+    const fetchProfileImage = async () => {
+      const { data: profileData, error } = await supabase
+        .from('profiles')
+        .select('ref_url')
+        .eq('user_id', user.id)
+        .single()
+      
+      console.log('Profile Data:', profileData?.ref_url);
+      if (profileData?.ref_url) {
+        setSampleImages([...sampleImages, profileData.ref_url]);
+      }
+      if (error) {
+        console.error('Error fetching profile:', error.message);
+        return;
+      }
+    };
+    
+    fetchProfileImage();    
+
   }, []);
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle image upload for sample images
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
+    const formData = new FormData();
+    formData.append('image', file); // 'image' はAPIが期待する名前に合わせてね！
+    formData.append('user_id', user?.id || ''); // ユーザーIDを追加
+    formData.append('company', user?.company || ''); // 会社名を追加
+
+    // ここでAPIに送信する処理を追加することもできます
+    // 例えば、fetchを使って送信することができます
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size exceeds 5MB limit');
+      return;
+    }
+
+    const isJPG = /\.(jpe?g)$/i.test(file.name);
+    const isImage = file.type.startsWith('image/') && file.type === 'image/jpeg';
+
+    if (!isImage || !isJPG) {
+      toast.error('Only JPG image files are allowed');
+      return;
+    }
+
+    try {
+      const response = await fetch(`${SERVER_URL}/upload_ref`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+
+      // 例: アップロード後に画像のURLが返ってくると仮定
+      if (data?.url) {
+        setSampleImages([...sampleImages, data.url]);
+        toast.success('Sample image uploaded!');
+      } else {
+        toast.warning('No image URL returned');
+      }
+
+    } catch (err) {
+      console.error('Upload error:', err);
+      toast.error('Failed to upload image');
+    }
+
 
     const reader = new FileReader();
     reader.onloadend = () => {
@@ -128,9 +198,24 @@ export default function SettingsPage() {
                     onChange={() => setDetectionMode('api')}
                     className="mt-1 form-radio text-blue-700"
                   />
-                  <label htmlFor="api" className="text-lg font-medium">API Mode</label>
+                  <label htmlFor="api" className="text-lg font-medium">chatGPT Mode</label>
                 </div>
 
+                {/* AI Mode */}
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="radio"
+                    id="ai"
+                    name="detectionMode"
+                    value="ai"
+                    checked={detectionMode === 'ai'}
+                    onChange={() => setDetectionMode('ai')}
+                    className="mt-1 form-radio text-blue-700"
+                  />
+                  <label htmlFor="ai" className="text-lg font-medium">AI Mode</label>
+                </div>
+
+                
                 {/* ref Mode */}
                 <div className="flex items-start space-x-3">
                   <input
@@ -155,34 +240,19 @@ export default function SettingsPage() {
                         className="w-24 h-24 object-cover rounded border"
                       />
                     ))}
-                    <label
-                      htmlFor="upload"
-                      className="w-24 h-24 flex items-center justify-center border border-gray-400 rounded cursor-pointer"
-                    >
-                      <Plus className="w-6 h-6 text-gray-700" />
+                    <div className="w-24 h-24 relative border border-gray-400 rounded overflow-hidden cursor-pointer">
                       <input
-                        id="upload"
                         type="file"
                         accept="image/*"
-                        className="hidden"
+                        className="absolute inset-0 opacity-0 z-10 cursor-pointer"
                         onChange={handleImageUpload}
                       />
-                    </label>
+                      <div className="absolute inset-0 flex items-center justify-center z-0">
+                        <Plus className="w-6 h-6 text-gray-700" />
+                      </div>
+                    </div>
                   </div>
                 )}
-                {/* AI Mode */}
-                <div className="flex items-start space-x-3">
-                  <input
-                    type="radio"
-                    id="ai"
-                    name="detectionMode"
-                    value="ai"
-                    checked={detectionMode === 'ai'}
-                    onChange={() => setDetectionMode('ai')}
-                    className="mt-1 form-radio text-blue-700"
-                  />
-                  <label htmlFor="ai" className="text-lg font-medium">AI Mode</label>
-                </div>
               </div>
               
               {/* Hight Quality Mode */}

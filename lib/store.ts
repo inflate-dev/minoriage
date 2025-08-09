@@ -1,4 +1,6 @@
+'use client';
 import { create } from 'zustand';
+import { persist, createJSONStorage  } from 'zustand/middleware';
 
 type DetectionMode = 'api' | 'ref' | 'ai';
 
@@ -32,6 +34,7 @@ interface AppState {
   isDetecting: boolean;
   totalBreadCount: number;
   detectionMode: DetectionMode; // Current detection mode
+  _hydrated: boolean;
   
   setUser: (user: any) => void;
   setDetectionResults: (results: DetectionResult[]) => void;
@@ -40,26 +43,42 @@ interface AppState {
   setTotalItemCount: (count: number) => void;
   clearDetection: () => void;
   setDetectionMode: (mode: DetectionMode) => void;
+  setHydrated: (v: boolean) => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
-  user: null,
-  detectionResults: [],
-  currentImage: null,
-  isDetecting: false,
-  totalBreadCount: 0,  
-  detectionMode: 'api', // Default detection mode
+export const useAppStore = create<AppState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      detectionResults: [],
+      currentImage: null,
+      isDetecting: false,
+      totalBreadCount: 0,  
+      detectionMode: 'api', // Default detection mode
+      _hydrated: false,
 
-  setUser: (user) => set({ user }),
-  setDetectionResults: (results) => set({ detectionResults: results }),
-  setCurrentImage: (image) => set({ currentImage: image }),
-  setIsDetecting: (detecting) => set({ isDetecting: detecting }),
-  setTotalItemCount: (count) => set({ totalBreadCount: count }),
-  clearDetection: () => set({ 
-    detectionResults: [], 
-    currentImage: null, 
-    isDetecting: false, 
-    totalBreadCount: 0 
-  }),
-  setDetectionMode: (mode: DetectionMode) => set({ detectionMode: mode})
-}));
+      setUser: (user) => set({ user }),
+      setDetectionResults: (results) => set({ detectionResults: results }),
+      setCurrentImage: (image) => set({ currentImage: image }),
+      setIsDetecting: (detecting) => set({ isDetecting: detecting }),
+      setTotalItemCount: (count) => set({ totalBreadCount: count }),
+      clearDetection: () => set({ 
+        detectionResults: [], 
+        currentImage: null, 
+        isDetecting: false, 
+        totalBreadCount: 0, 
+      }),
+      setDetectionMode: (mode: DetectionMode) => set({ detectionMode: mode}),
+      setHydrated: (v) => set({ _hydrated: v }),
+    }),
+    { 
+      name: 'app-storage', // Unique name for the storage
+      storage: createJSONStorage(()=>localStorage),
+      partialize: (state) => ({ detectionMode: state.detectionMode, user: state.user }),
+      onRehydrateStorage: () => (state, err) => {
+        // 復元後フラグON
+        state?.setHydrated(true);
+      },
+    }
+  )
+);
