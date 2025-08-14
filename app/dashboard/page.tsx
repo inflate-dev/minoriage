@@ -204,7 +204,7 @@ export default function DashboardPage() {
                   <Camera className="w-4 h-4 text-blue-600" />
                 </div>
                 <div className="flex-1">
-                  <p className="font-medium">Croissant Detection Completed</p>
+                  <p className="font-medium">Detection Results</p>
                   <p className="text-sm text-gray-600">12 items detected - 2 min ago</p>
                 </div>
               </div>

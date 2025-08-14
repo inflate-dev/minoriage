@@ -93,11 +93,12 @@ export default function CameraPage() {
     // upload_id ごとにまとめて、bboxの合計数をカウント
     const grouped = data.reduce((acc, row) => {
       const id = row.upload_id;
+      const createdAt = new Date(row.created_at);
   
       if (!acc[id]) {
         acc[id] = {
           id,
-          timestamp: row.created_at,
+          timestamp: createdAt.toLocaleString(),
           totalCount: 0,
           typeCounts: {} as Record<string, number>
         };
@@ -449,7 +450,7 @@ export default function CameraPage() {
               disabled={detectionBoxes.length === 0 || isDetecting}
             >
               <Save className="w-4 h-4 mr-1" />
-              Save
+              Record
             </Button>
           </div>
         </div>
