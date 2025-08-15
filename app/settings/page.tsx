@@ -187,20 +187,7 @@ export default function SettingsPage() {
                     Select a method for detecting and counting items from the captured image.
                   </div>
                 </div>
-                {/* API Mode */}
-                <div className="flex items-start space-x-3">
-                  <input
-                    type="radio"
-                    id="api"
-                    name="detectionMode"
-                    value="api"
-                    checked={detectionMode === 'api'}
-                    onChange={() => setDetectionMode('api')}
-                    className="mt-1 form-radio text-blue-700"
-                  />
-                  <label htmlFor="api" className="text-lg font-medium">chatGPT Mode</label>
-                </div>
-
+                                
                 {/* AI Mode */}
                 <div className="flex items-start space-x-3">
                   <input
@@ -214,8 +201,20 @@ export default function SettingsPage() {
                   />
                   <label htmlFor="ai" className="text-lg font-medium">AI Mode</label>
                 </div>
-
-                
+                {/* API Mode */}
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="radio"
+                    id="api"
+                    name="detectionMode"
+                    value="api"
+                    checked={detectionMode === 'api'}
+                    onChange={() => setDetectionMode('api')}
+                    className="mt-1 form-radio text-blue-700"
+                  />
+                  <label htmlFor="api" className="text-lg font-medium">chatGPT Mode</label>
+                </div>
+               
                 {/* ref Mode */}
                 <div className="flex items-start space-x-3">
                   <input

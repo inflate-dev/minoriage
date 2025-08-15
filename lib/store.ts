@@ -54,7 +54,7 @@ export const useAppStore = create<AppState>()(
       currentImage: null,
       isDetecting: false,
       totalBreadCount: 0,  
-      detectionMode: 'api', // Default detection mode
+      detectionMode: 'ai', // Default detection mode
       _hydrated: false,
 
       setUser: (user) => set({ user }),
