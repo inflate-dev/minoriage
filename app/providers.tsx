@@ -14,20 +14,34 @@ export function Providers({ children }: { children: React.ReactNode }) {
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
-  }, []);
+  }, [setUser]);
 
   useEffect(() => {
     if (!user) return;
 
-    const timeout = setTimeout(() => {
-      console.log('⏰ セッション切れ：自動ログアウト');
+    let lastActivity = Date.now()
 
-      setUser(null);
-      localStorage.removeItem('user');
-      router.push('/login'); // ログイン画面へリダイレクト
-    }, 120 * 60 * 1000); // 30分
+    const updateActivity = () => {
+      lastActivity = Date.now()
+    }
 
-    return () => clearTimeout(timeout); // クリーンアップ
+    window.addEventListener('mousemove', updateActivity)
+    window.addEventListener('keydown', updateActivity)
+
+    const interval = setInterval(() => {
+      if (Date.now() - lastActivity > 5 * 60 * 1000) {
+        console.log('⏰ xx分間操作なし → 自動ログアウト')
+        setUser(null)
+        localStorage.removeItem('user')
+        router.push('/login')
+      }
+    }, 60 * 1000)
+    
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('mousemove', updateActivity)
+      window.removeEventListener('keydown', updateActivity)
+    }
   }, [user, setUser, router]);
 
   return <>{children}</>;

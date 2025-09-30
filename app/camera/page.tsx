@@ -80,6 +80,7 @@ export default function CameraPage() {
       bbox,
       created_at
     `)
+    .eq('user_id', user?.id)
     .gte('created_at', todayStartISO) 
     .order('created_at', { ascending: false })
 
