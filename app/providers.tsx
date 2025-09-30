@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
+import { supabase } from '@/lib/supabase';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const setUser = useAppStore((state) => state.setUser);
@@ -10,39 +11,42 @@ export function Providers({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
-    }
-  }, [setUser]);
+    const checkLoginTimeout = async () => {
+      const storedUser = localStorage.getItem('user')
+      const loginTime = localStorage.getItem('loginTime')
 
-  useEffect(() => {
-    if (!user) return;
+      if (storedUser && loginTime) {
+        const elapsed = Date.now() - parseInt(loginTime, 10)
+        const limit = 90 * 60 * 1000
 
-    let lastActivity = Date.now()
+        if (elapsed > limit) {
+          console.log('⏰ 1.5時間経過 → 強制ログアウト')
+          await supabase.auth.signOut()
+          localStorage.removeItem('user')
+          localStorage.removeItem('loginTime')
+          setUser(null)
+          router.push('/login')
+          return
+        }
 
-    const updateActivity = () => {
-      lastActivity = Date.now()
-    }
-
-    window.addEventListener('mousemove', updateActivity)
-    window.addEventListener('keydown', updateActivity)
-
-    const interval = setInterval(() => {
-      if (Date.now() - lastActivity > 5 * 60 * 1000) {
-        console.log('⏰ xx分間操作なし → 自動ログアウト')
-        setUser(null)
-        localStorage.removeItem('user')
-        router.push('/login')
+        setUser(JSON.parse(storedUser))
       }
-    }, 60 * 1000)
-    
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener('mousemove', updateActivity)
-      window.removeEventListener('keydown', updateActivity)
     }
-  }, [user, setUser, router]);
+
+    checkLoginTimeout() // 初回表示時チェック！
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        checkLoginTimeout() // 復帰時にもチェック！
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+    }
+  }, [setUser, router])
 
   return <>{children}</>;
 }
