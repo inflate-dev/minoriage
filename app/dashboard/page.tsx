@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
@@ -8,11 +8,35 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { toast } from 'sonner';
+import useSWR from 'swr'
+import { fetcher } from '@/lib/fetcher'
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  Legend,
+} from 'recharts'
 import { Camera, BarChart3, LogOut, Wheat, Smartphone, TrendingUp } from 'lucide-react';
+
+type InventoryData = {
+  date: string
+  items: Record<string, number>
+}
+
+type ChartData = { hour?: string; day?: string; month?: string; total: number };
+
 
 export default function DashboardPage() {
   const router = useRouter();
   const { user, setUser } = useAppStore();
+  const [range, setRange] = useState<'day' | 'week' | 'month' | 'year'>('day')
+  const [date, setDate] = useState<string>(new Date().toISOString().slice(0, 10))
+  const [fromDate, setFromDate] = useState(new Date().toISOString().slice(0, 10))
+  const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10))
+  const [chartData, setChartData] = useState<ChartData[]>([]);
 
   useEffect(() => {
     const getUser = async () => {
@@ -23,6 +47,85 @@ export default function DashboardPage() {
     };
     getUser();
   }, [setUser]);
+
+  useEffect(() => {
+    let newChartData: ChartData[] = [];
+
+    if (range === 'day') {
+      newChartData = Array.from({ length: 12 }, (_, i) => {
+        const hour = i * 2
+        return {
+          hour: `${String(hour).padStart(2, '0')}:00`,
+          total: Math.floor(Math.random() * 10), // 仮データ
+        }
+      })
+    } else if (range === 'week') {
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+      newChartData = days.map(day => ({
+        day,
+        total: Math.floor(Math.random() * 50),
+      }))
+    } else if (range === 'month') {
+      newChartData = Array.from({ length: 30 }, (_, i) => ({
+        day: `${i + 1}`,
+        total: Math.floor(Math.random() * 50),
+      }))
+    } else if (range === 'year') {
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      newChartData = months.map(month => ({
+        month,
+        total: Math.floor(Math.random() * 300),
+      }))
+    }
+
+    setChartData(newChartData)
+  }, [range])
+
+  // from と to を range + date から計算する関数（簡易版）
+  const getFromTo = (): { from: string; to: string } => {
+    const d = new Date(date)
+    let from = ''
+    let to = ''
+    if (range === 'day') {
+      from = '2025-10-01'
+      //from = date
+      to = date
+    } else if (range === 'week') {
+      // 例：その日を含む1週間前〜その日
+      const prev = new Date(d)
+      prev.setDate(d.getDate() - 6)
+      from = prev.toISOString().slice(0, 10)
+      to = date
+    } else if (range === 'month') {
+      const first = new Date(d.getFullYear(), d.getMonth(), 1)
+      from = first.toISOString().slice(0, 10)
+      to = date
+    } else if (range === 'year') {
+      const first = new Date(d.getFullYear(), 0, 1)
+      from = first.toISOString().slice(0, 10)
+      to = date
+    }
+    return { from, to }
+  }
+
+  const { from, to } = getFromTo()
+
+  const { data, error, isLoading } = useSWR<InventoryData[]>(
+    user ? `/api/inventory-summary?from=${from}&to=${to}` : null,
+    fetcher,
+    {
+      keepPreviousData: true
+    }
+  )
+  if (error) {
+    console.error('SWR error:', error)
+    return <div>error occur</div>
+  }
+
+  if (isLoading) return <div>Loading...</div>
+
+  // 今日のサマリ（range=day のときだけ表示したいかも）
+  const todayRecord = data?.find(r => r.date === date)
 
   const handleExportCSV = async () => {
     const { data, error } = await supabase
@@ -78,7 +181,7 @@ export default function DashboardPage() {
               Dashboard
             </h2>
             <p className="text-gray-600">
-              Welcome to the AI Item counter and inventory management system.
+              View detailed reports including inventory status, sales trends, and efficiency based on the detection data.
             </p>
           </div>
             <Button
@@ -89,8 +192,117 @@ export default function DashboardPage() {
             </Button>
         </div>
 
-        {/* Quick Stats */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          {/* Inventory Summary */}
+          <Card className="md:col-span-2 flexx flex-col">
+            <CardHeader>
+              <CardTitle>Today's Inventory Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="flex-grow">
+              <table className="w-full text-left border-separate border-spacing-y-2">
+                <thead className="text-gray-600 border-b">
+                  <tr>
+                    <th className="px-2 py-1">Item</th>
+                    <th className="px-2 py-1 text-center">Count</th>
+                    <th className="px-2 py-1 text-center">Sold</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {todayRecord ? (
+                    Object.entries(todayRecord.items).map(([item, count]) => {
+                      const sold = Math.floor(Math.random() * 40) // 仮の売上数
+                      return (
+                        <tr key={item} className="bg-gray-50 hover:bg-gray-100 rounded">
+                          <td className="px-2 py-2 font-medium">{item}</td>
+                          <td className="text-center">{count}</td>
+                          <td className="text-center text-red-500 font-semibold">{sold}</td>
+                        </tr>
+                      )
+                    })  
+                  ) : (
+                    <tr>
+                      <td colSpan={3} className="text-center py-4 text-gray-500"> No data for selected date</td>
+                    </tr>
+                  )}
+                </tbody>  
+              </table>
+            </CardContent>
+          </Card>
+
+          {/* Sales Summary */}
+          <div className="flex flex-col justify-between h-full space-y-4">
+            <Card className="flex-1">
+              <CardHeader>
+                <CardTitle>Total Sales</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">$---</div>
+              </CardContent>
+            </Card>
+            <Card className="flex-1">
+              <CardHeader>
+                <CardTitle>Sales This Month</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">$---</div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        {/* 範囲選択 UI */}
+        <div className="mb-6 flex flex-wrap items-center gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Range</label>
+            <select
+              value={range}
+              onChange={e => setRange(e.target.value as any)}
+              className="block w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm
+             focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <option value="day">Day</option>
+              <option value="week">Week</option>
+              <option value="month">Month</option>
+              <option value="year">Year</option>
+            </select>
+          </div>
+
+          {/* 日付入力 */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <input
+              type="date"
+              value={date}
+              onChange={e => setDate(e.target.value)}
+              className="block w-44 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm
+             focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            />
+          </div>
+        </div>
+
+        {/* グラフ */}
+        <div className="h-60 border p-4 rounded">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chartData}>
+              <XAxis dataKey={
+                range === 'day' ? 'hour' :
+                range === 'week' || range === 'month' ? 'day' :
+                range === 'year' ? 'month' : ''
+              } />
+              <YAxis />
+              <Tooltip />
+              <Legend />
+              <Bar dataKey="total" fill="#200096ff" name="Total Count" />
+              {/* 個別 object_type の Bar を追加したければこんな感じ：
+              {keys.map(key => (
+                <Bar key={key} dataKey={key} name={key} />
+              ))} */}
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Items Detected Today</CardTitle>
@@ -128,100 +340,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Main Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-center">
-                <div className="p-3 bg-green-600 rounded-full mr-4">
-                  <BarChart3 className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">Analytics & Reports</CardTitle>
-                  <CardDescription>
-                    Inventory & sales insights
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                View detailed reports including inventory status, sales trends, and efficiency based on the detection data.
-              </p>
-              <Button 
-                onClick={() => router.push('/analytics')} 
-                className="w-full"
-                variant="outline"
-              >
-                <BarChart3 className="w-4 h-4 mr-2" />
-                View Reports
-              </Button>
-            </CardContent>
-          </Card>
-
-          <Card className="cursor-pointer hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-center">
-                <div className="p-3 bg-blue-600 rounded-full mr-4">
-                  <Smartphone className="w-8 h-8 text-white" />
-                </div>
-                <div>
-                  <CardTitle className="text-xl">Item Detection</CardTitle>
-                  <CardDescription>
-                    Use camera to detect Item automatically
-                  </CardDescription>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Use your phone’s camera to take a photo of breads on a table. The AI will automatically detect types and counts.
-              </p>
-              <Button 
-                onClick={() => router.push('/camera')} 
-                className="w-full"
-              >
-                <Camera className="w-4 h-4 mr-2" />
-                Start Detection
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Activity */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Recent Activity</CardTitle>
-            <CardDescription>
-              Latest detections and activity history
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                <div className="p-2 bg-blue-100 rounded-full">
-                  <Camera className="w-4 h-4 text-blue-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">Detection Results</p>
-                  <p className="text-sm text-gray-600">12 items detected - 2 min ago</p>
-                </div>
-              </div>
-              <div className="flex items-center space-x-4 p-4 bg-gray-50 rounded-lg">
-                <div className="p-2 bg-green-100 rounded-full">
-                  <Wheat className="w-4 h-4 text-green-600" />
-                </div>
-                <div className="flex-1">
-                  <p className="font-medium">Inventory Updated</p>
-                  <p className="text-sm text-gray-600">24 loaves detected - 15 min ago</p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </main>
-
       <BottomNavigation />
     </div>
   );

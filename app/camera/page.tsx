@@ -3,7 +3,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useAppStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { toast } from 'sonner';
 import { Camera, RotateCcw, Save, Loader2, Eye, Clock } from 'lucide-react';

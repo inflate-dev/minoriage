@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAppStore } from '@/lib/store';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -9,7 +9,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Separator } from '@/components/ui/separator';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { toast } from 'sonner';
 import { 
@@ -22,9 +21,8 @@ import {
   Save,
   Camera,
   Trash2,
-  Download,
-  BarChart3
 } from 'lucide-react';
+import { ManagePlanModal } from '@/components/subscription/ManagePlanModal';
 
 export default function AccountPage() {
   const router = useRouter();
@@ -33,12 +31,25 @@ export default function AccountPage() {
   const [name, setName] = useState(user?.name || 'User');
   const [email, setEmail] = useState(user?.email || 'demo@breadfactory.com');
   const [company, setCompany] = useState(user?.company || 'Demo Company');
+  const searchParams = useSearchParams();
 
   useEffect(() => {
     setName(user?.name || 'User');
     setEmail(user?.email || 'sample@email.com');
     setCompany(user?.company || 'Demo Company');
   }, [user, router]);
+
+  useEffect(() => {
+    if (searchParams.get('success') === 'true') {
+      toast.success("Thank you for upgrading your plan! 🎉");
+
+      setTimeout(() => {
+        const url = new URL(window.location.href);
+        url.searchParams.delete("success");
+        window.history.replaceState({}, "", url.toString());
+      }, 3000);
+    }
+  }, [searchParams]);
 
   const handleSaveProfile = () => {
     // Here you would update the user profile in Supabase
@@ -69,7 +80,7 @@ export default function AccountPage() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
-            <h1 className="text-xl font-bold text-gray-900">Account</h1>
+            <h1 className="text-xl font-bold text-gray-900">Account Settings</h1>
           </div>
         </div>
       </header>
@@ -83,7 +94,7 @@ export default function AccountPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <User className="w-5 h-5 mr-2 text-blue-600" />
-                  <CardTitle>Profile</CardTitle>
+                  <CardTitle>Personal Info</CardTitle>
                 </div>
                 <Button
                   variant="outline"
@@ -107,7 +118,7 @@ export default function AccountPage() {
             <CardContent className="space-y-6">
               <div className="flex items-center space-x-4">
                 <Avatar className="w-20 h-20">
-                  <AvatarImage src="/placeholder-avatar.jpg" />
+                  <AvatarImage src="/placeholder-avatar.png" />
                   <AvatarFallback className="text-lg">
                     {name.charAt(0)}
                   </AvatarFallback>
@@ -172,10 +183,10 @@ export default function AccountPage() {
             <CardHeader>
               <div className="flex items-center">
                 <Shield className="w-5 h-5 mr-2 text-red-600" />
-                <CardTitle>Security</CardTitle>
+                <CardTitle>Security Settings</CardTitle>
               </div>
               <CardDescription>
-                Account security settings
+                Manage your password and two-factor authentication
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -190,12 +201,43 @@ export default function AccountPage() {
             </CardContent>
           </Card>
 
+          {/* Subscription Plan */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center">
+                <Mail className="w-5 h-5 mr-2 text-green-600" />
+                <div>
+                  <CardTitle>Subscription Plan</CardTitle>
+                  <CardDescription>View or manage your current plan</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="text-sm text-gray-700">
+                <p>
+                  <span className="font-medium">Current Plan:</span>{" "}
+                   {user?.plan || "Free"} ({user?.price || "$0"}/month)
+                </p>
+              </div>
+              <div className="flex space-x-2">
+                <ManagePlanModal
+                  currentPlan="Free"
+                  trigger={
+                    <Button variant="default" size="sm">
+                      Manage Plan
+                    </Button>
+                  }
+                />
+              </div>
+            </CardContent>
+          </Card>
+
           {/* Data Management */}
           <Card>
             <CardHeader>
-              <CardTitle>Data Management</CardTitle>
+              <CardTitle>Account & Data</CardTitle>
               <CardDescription>
-                Manage and export your data
+                Manage your account or delete it permanently
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -219,7 +261,7 @@ export default function AccountPage() {
               className="w-full max-w-md text-red-600 border-red-200 hover:bg-red-50"
             >
               <LogOut className="w-4 h-4 mr-2" />
-              Log Out
+              Sign Out
             </Button>
           </div>
         </div>

@@ -44,7 +44,7 @@ export default function LoginPage() {
           if (user) {
             
             setUser({id: user.id, email: user.email, role: user.role , token: access_token, 
-              company: user.company, name: user.name, created_at: user.created_at});
+              company: user.company, name: user.name, created_at: user.created_at, plan: user.plan, price: user.price});
             localStorage.setItem('loginTime', Date.now().toString()) 
           }
           localStorage.setItem('user', JSON.stringify(user));

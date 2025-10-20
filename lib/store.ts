@@ -25,6 +25,8 @@ interface User {
   company: string;
   name?: string; // Optional field for user's name
   created_at?: string; // Optional field for account creation date
+  plan?: string; // Optional field for user's plan
+  price?: string; // Optional field for user's plan price
 }
 
 interface AppState {
