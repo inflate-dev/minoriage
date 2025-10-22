@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl'
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
@@ -7,6 +8,7 @@ import { useAppStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { toast } from 'sonner';
 import useSWR from 'swr'
 import { fetcher } from '@/lib/fetcher'
@@ -19,7 +21,7 @@ import {
   Tooltip,
   Legend,
 } from 'recharts'
-import { Camera, BarChart3, LogOut, Wheat, Smartphone, TrendingUp } from 'lucide-react';
+import { Camera, BarChart as BarChartIcon , TrendingUp } from 'lucide-react';
 
 type InventoryData = {
   date: string
@@ -30,6 +32,7 @@ type ChartData = { hour?: string; day?: string; month?: string; total: number };
 
 
 export default function DashboardPage() {
+  const t = useTranslations('dashboard')
   const router = useRouter();
   const { user, setUser } = useAppStore();
   const [range, setRange] = useState<'day' | 'week' | 'month' | 'year'>('day')
@@ -119,10 +122,10 @@ export default function DashboardPage() {
   )
   if (error) {
     console.error('SWR error:', error)
-    return <div>error occur</div>
+    return <div>{t('error')}</div>
   }
 
-  if (isLoading) return <div>Loading...</div>
+  if (isLoading) return <div>{t('loading')}</div>
 
   // 今日のサマリ（range=day のときだけ表示したいかも）
   const todayRecord = data?.find(r => r.date === date)
@@ -165,10 +168,11 @@ export default function DashboardPage() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="p-2 bg-blue-600 rounded-lg mr-3">
-                <Wheat className="w-6 h-6 text-white" />
+                <BarChartIcon className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-gray-900">AI Item Counter</h1>
+              <h1 className="text-xl font-bold text-gray-900">{t('headerTitle')}</h1>
             </div>
+            <LanguageSwitcher/>
           </div>
         </div>
       </header>
@@ -178,17 +182,17 @@ export default function DashboardPage() {
         <div className="mb-8 flex justify-between items-start">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Dashboard
+              {t('title')}
             </h2>
             <p className="text-gray-600">
-              View detailed reports including inventory status, sales trends, and efficiency based on the detection data.
+              {t('description')}
             </p>
           </div>
             <Button
               className="bg-green-100 text-black border border-green-500 hover:bg-green-200 mt-2"
               onClick={handleExportCSV}
             >
-              Export CSV
+              {t('export')}
             </Button>
         </div>
 
@@ -196,15 +200,15 @@ export default function DashboardPage() {
           {/* Inventory Summary */}
           <Card className="md:col-span-2 flexx flex-col">
             <CardHeader>
-              <CardTitle>Today's Inventory Summary</CardTitle>
+              <CardTitle>{t('inventorySummaryTitle')}</CardTitle>
             </CardHeader>
             <CardContent className="flex-grow">
               <table className="w-full text-left border-separate border-spacing-y-2">
                 <thead className="text-gray-600 border-b">
                   <tr>
-                    <th className="px-2 py-1">Item</th>
-                    <th className="px-2 py-1 text-center">Count</th>
-                    <th className="px-2 py-1 text-center">Sold</th>
+                    <th>{t('inventoryItem')}</th>
+                    <th className="text-center">{t('inventoryCount')}</th>
+                    <th className="text-center">{t('inventorySold')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -221,7 +225,7 @@ export default function DashboardPage() {
                     })  
                   ) : (
                     <tr>
-                      <td colSpan={3} className="text-center py-4 text-gray-500"> No data for selected date</td>
+                      <td colSpan={3} className="text-center py-4 text-gray-500"> {t('noData')}</td>
                     </tr>
                   )}
                 </tbody>  
@@ -233,7 +237,7 @@ export default function DashboardPage() {
           <div className="flex flex-col justify-between h-full space-y-4">
             <Card className="flex-1">
               <CardHeader>
-                <CardTitle>Total Sales</CardTitle>
+                <CardTitle> {t('salesTotal')} </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">$---</div>
@@ -241,7 +245,7 @@ export default function DashboardPage() {
             </Card>
             <Card className="flex-1">
               <CardHeader>
-                <CardTitle>Sales This Month</CardTitle>
+                <CardTitle> {t('salesMonth')} </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-bold">$---</div>
@@ -253,23 +257,23 @@ export default function DashboardPage() {
         {/* 範囲選択 UI */}
         <div className="mb-6 flex flex-wrap items-center gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Range</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('rangeLabel')}</label>
             <select
               value={range}
               onChange={e => setRange(e.target.value as any)}
               className="block w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm
              focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
-              <option value="day">Day</option>
-              <option value="week">Week</option>
-              <option value="month">Month</option>
-              <option value="year">Year</option>
+              <option value="day">{t('rangeDay')}</option>
+              <option value="week">{t('rangeWeek')}</option>
+              <option value="month">{t('rangeMonth')}</option>
+              <option value="year">{t('rangeYear')}</option>
             </select>
           </div>
 
           {/* 日付入力 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">{t('dateLabel')}</label>
             <input
               type="date"
               value={date}
@@ -305,37 +309,37 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8 mt-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Items Detected Today</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('quickStats.detectedToday')}</CardTitle>
               <Camera className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">24</div>
               <p className="text-xs text-muted-foreground">
-                +12% vs yesterday
+                {t('quickStats.vsYesterday')}
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Detected Items</CardTitle>
-              <Wheat className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">{t('quickStats.totalItems')}</CardTitle>
+              <BarChartIcon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">347</div>
               <p className="text-xs text-muted-foreground">
-                Current Stock
+                {t('quickStats.vsYesterday')}
               </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sales Efficiency</CardTitle>
+              <CardTitle className="text-sm font-medium">{t('quickStats.salesEfficiency')}</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">92%</div>
               <p className="text-xs text-muted-foreground">
-                +5% vs last week
+                {t('quickStats.vsLastWeek')}
               </p>
             </CardContent>
           </Card>

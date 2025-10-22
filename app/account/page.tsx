@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslations } from 'next-intl'
 import { useAppStore } from '@/lib/store';
 import { supabase } from '@/lib/supabase';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { toast } from 'sonner';
 import { 
   User, 
@@ -20,11 +22,12 @@ import {
   Edit3, 
   Save,
   Camera,
-  Trash2,
+  Trash2
 } from 'lucide-react';
 import { ManagePlanModal } from '@/components/subscription/ManagePlanModal';
 
 export default function AccountPage() {
+  const t = useTranslations('account')
   const router = useRouter();
   const { user, setUser } = useAppStore();
   const [isEditing, setIsEditing] = useState(false);
@@ -41,7 +44,7 @@ export default function AccountPage() {
 
   useEffect(() => {
     if (searchParams.get('success') === 'true') {
-      toast.success("Thank you for upgrading your plan! 🎉");
+      toast.success(t('toast.upgraded'));
 
       setTimeout(() => {
         const url = new URL(window.location.href);
@@ -53,7 +56,7 @@ export default function AccountPage() {
 
   const handleSaveProfile = () => {
     // Here you would update the user profile in Supabase
-    toast.success('Profile updated successfully');
+    toast.success(t('toast.profileUpdated'));
     setIsEditing(false);
   };
 
@@ -62,16 +65,16 @@ export default function AccountPage() {
       await supabase.auth.signOut();
       setUser(null);
       localStorage.removeItem('user');
-      toast.success('Logged out successfully');
+      toast.success(t('logout.success'));
       router.push('/login');
     } catch (error: any) {
-      toast.error('Failed to log out: ' + error.message);
+      toast.error(t('logout.fail') + error.message);
     }
   };
 
   const handleDeleteAccount = () => {
     // Here you would show a confirmation dialog and delete account
-    toast.error('Account deletion feature is under development');
+    toast.error(t('data.deleteWarning'));
   };
 
   return (
@@ -80,7 +83,13 @@ export default function AccountPage() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
-            <h1 className="text-xl font-bold text-gray-900">Account Settings</h1>
+            <div className="p-2 bg-blue-600 rounded-lg mr-3">
+              <User className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-xl font-bold text-gray-900">{t('title')}</h1>
+            <div className="ml-auto">
+              <LanguageSwitcher/>
+            </div>
           </div>
         </div>
       </header>
@@ -94,7 +103,7 @@ export default function AccountPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <User className="w-5 h-5 mr-2 text-blue-600" />
-                  <CardTitle>Personal Info</CardTitle>
+                  <CardTitle>{t('profile.title')}</CardTitle>
                 </div>
                 <Button
                   variant="outline"
@@ -104,12 +113,12 @@ export default function AccountPage() {
                   {isEditing ? (
                     <>
                       <Save className="w-4 h-4 mr-2" />
-                      Save
+                      {t('profile.save')}
                     </>
                   ) : (
                     <>
                       <Edit3 className="w-4 h-4 mr-2" />
-                      Edit
+                      {t('profile.edit')}
                     </>
                   )}
                 </Button>
@@ -127,7 +136,7 @@ export default function AccountPage() {
                   {isEditing ? (
                     <div className="space-y-4">
                       <div>
-                        <Label htmlFor="name">Name</Label>
+                        <Label htmlFor="name">{t('profile.name')}</Label>
                         <Input
                           id="name"
                           value={name}
@@ -135,7 +144,7 @@ export default function AccountPage() {
                         />
                       </div>
                       <div>
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email">{t('profile.email')}</Label>
                         <Input
                           id="email"
                           type="email"
@@ -153,7 +162,7 @@ export default function AccountPage() {
                       </div>
                       <div className="flex items-center text-gray-600">
                         <Calendar className="w-4 h-4 mr-2" />
-                        Joined: {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
+                        {t('profile.joined')}: {user?.created_at ? new Date(user.created_at).toLocaleDateString() : 'N/A'}
                       </div>
                     </div>
                   )}
@@ -164,14 +173,14 @@ export default function AccountPage() {
                 <div className="flex space-x-2">
                   <Button onClick={handleSaveProfile} size="sm">
                     <Save className="w-4 h-4 mr-2" />
-                    Save
+                    {t('profile.save')}
                   </Button>
                   <Button 
                     variant="outline" 
                     size="sm"
                     onClick={() => setIsEditing(false)}
                   >
-                    Cancel
+                    {t('profile.cancel')}
                   </Button>
                 </div>
               )}
@@ -183,20 +192,20 @@ export default function AccountPage() {
             <CardHeader>
               <div className="flex items-center">
                 <Shield className="w-5 h-5 mr-2 text-red-600" />
-                <CardTitle>Security Settings</CardTitle>
+                <CardTitle>{t('security.title')}</CardTitle>
               </div>
               <CardDescription>
-                Manage your password and two-factor authentication
+                {t('security.description')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <Button variant="outline" className="w-full justify-start">
                 <Shield className="w-4 h-4 mr-2" />
-                Change password
+                {t('security.changePassword')}
               </Button>
               <Button variant="outline" className="w-full justify-start">
                 <Camera className="w-4 h-4 mr-2" />
-                Set up 2FA
+                {t('security.setup2fa')}
               </Button>
             </CardContent>
           </Card>
@@ -207,16 +216,16 @@ export default function AccountPage() {
               <div className="flex items-center">
                 <Mail className="w-5 h-5 mr-2 text-green-600" />
                 <div>
-                  <CardTitle>Subscription Plan</CardTitle>
-                  <CardDescription>View or manage your current plan</CardDescription>
+                  <CardTitle>{t('subscription.title')}</CardTitle>
+                  <CardDescription>{t('subscription.description')}</CardDescription>
                 </div>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="text-sm text-gray-700">
                 <p>
-                  <span className="font-medium">Current Plan:</span>{" "}
-                   {user?.plan || "Free"} ({user?.price || "$0"}/month)
+                  <span className="font-medium">{t('subscription.currentPlan')}:</span>{" "}
+                   {user?.plan || "Free"} ({user?.price || "$0"}/{t('subscription.month')})
                 </p>
               </div>
               <div className="flex space-x-2">
@@ -224,7 +233,7 @@ export default function AccountPage() {
                   currentPlan="Free"
                   trigger={
                     <Button variant="default" size="sm">
-                      Manage Plan
+                      {t('subscription.manage')}
                     </Button>
                   }
                 />
@@ -235,9 +244,9 @@ export default function AccountPage() {
           {/* Data Management */}
           <Card>
             <CardHeader>
-              <CardTitle>Account & Data</CardTitle>
+              <CardTitle>{t('data.title')}</CardTitle>
               <CardDescription>
-                Manage your account or delete it permanently
+                {t('data.description')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -247,7 +256,7 @@ export default function AccountPage() {
                 onClick={handleDeleteAccount}
               >
                 <Trash2 className="w-4 h-4 mr-2" />
-                Delete Account
+                {t('data.delete')}
               </Button>
             </CardContent>
           </Card>
@@ -261,7 +270,7 @@ export default function AccountPage() {
               className="w-full max-w-md text-red-600 border-red-200 hover:bg-red-50"
             >
               <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
+              {t('logout.button')}
             </Button>
           </div>
         </div>

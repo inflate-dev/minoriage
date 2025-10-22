@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useRef, useCallback, useEffect } from 'react';
+import { useTranslations } from 'next-intl'
 import { useAppStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { toast } from 'sonner';
-import { Camera, RotateCcw, Save, Loader2, Eye, Clock } from 'lucide-react';
+import { Camera, RotateCcw, Save, Loader2, Clock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
 
@@ -36,6 +38,7 @@ interface DetectionHistory {
 }
 
 export default function CameraPage() {
+  const t = useTranslations('camera')
   const user = useAppStore(state => state.user);
   const { detectionMode } = useAppStore();
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -130,7 +133,7 @@ export default function CameraPage() {
         setIsStreaming(true);
       }
     } catch (error) {
-      toast.error('Failed to start camera');
+      toast.error(t('startCameraError'));
       console.error('Camera error:', error);
     }
   }, []);
@@ -268,9 +271,9 @@ export default function CameraPage() {
         bbox: det.bbox
       })));
       
-      toast.success(`${detectionBoxes.length} item(s) detected`);
+      toast.success(t('detectSuccess'));
     } catch (error) {
-      toast.error('Detection failed');
+      toast.error(t('detectFail'));
       console.error('Detection error:', error);
     } finally {
       setIsDetecting(false);
@@ -286,7 +289,7 @@ export default function CameraPage() {
 
   const saveResults = useCallback(async () => {
     if (detectionBoxes.length === 0) {
-      toast.error('No detection results to sav');
+      toast.error(t('noDetectionResult'));
       return;
     }
 
@@ -305,7 +308,7 @@ export default function CameraPage() {
       };
       
       setDetectionHistory(prev => [newEntry, ...prev]);
-      toast.success('Detection results saved');
+      toast.success(t('saveSuccess'));
       
       // Reset for next detection
       setCapturedImage(null);
@@ -313,7 +316,7 @@ export default function CameraPage() {
       setTotalCount(0);
       startCamera();
     } catch (error) {
-      toast.error('Failed to save detection results');
+      toast.error(t('saveError'));
       console.error('Save error:', error);
     }
   }, [detectionBoxes, totalCount, capturedImage, startCamera]);
@@ -337,7 +340,10 @@ export default function CameraPage() {
       <header className="bg-gray-800 border-b border-gray-700 flex-shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-center h-14">
-            <h1 className="text-lg font-bold text-white">Counting System</h1>
+            <h1 className="text-lg font-bold text-white">{t('title')}</h1>
+            <div className="ml-auto">
+              <LanguageSwitcher textClassName="text-white"/>
+            </div>
           </div>
         </div>
       </header>
@@ -386,7 +392,7 @@ export default function CameraPage() {
               <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
                 <div className="bg-gray-800 p-4 rounded-lg flex items-center space-x-3">
                   <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
-                  <span className="text-white font-medium text-sm">detecting...</span>
+                  <span className="text-white font-medium text-sm">{t('detecting')}</span>
                 </div>
               </div>
             )}
@@ -400,13 +406,13 @@ export default function CameraPage() {
           <div className="w-full flex justify-center mt-4">
             <div className="bg-gray-700 text-white rounded-lg shadow-md p-4 w-full max-w-sm">
               <div className="text-xl font-bold text-blue-400 mb-2 text-center">
-                Total: {totalCount}
+                {t('total')}: {totalCount}
               </div>
               <div className="text-sm text-gray-300 text-center">
                 {Object.entries(countsByType).map(([type, count]) => (
                   <div key={type} className="flex justify-center gap-6 px-2 text-base">
-                    <span>Type: {type}</span>
-                    <span>Qty: {count}</span>
+                    <span>{t('type')}: {type}</span>
+                    <span>{t('qty')}: {count}</span>
                   </div>
                 ))}
               </div>
@@ -415,7 +421,7 @@ export default function CameraPage() {
         )}
         {totalCount == 0 && (
           <div className="p-3 text-center text-gray-400 text-sm">
-            No detections
+            {t('noDetections')}
           </div>
         )}
 
@@ -429,7 +435,7 @@ export default function CameraPage() {
               disabled={!isStreaming || isDetecting}
             >
               <Camera className="w-4 h-4 mr-1" />
-              Capture
+              {t('capture')}
             </Button>
             
             <Button
@@ -440,7 +446,7 @@ export default function CameraPage() {
               disabled={isDetecting}
             >
               <RotateCcw className="w-4 h-4 mr-1" />
-              Retry
+              {t('retry')}
             </Button>
             
             <Button
@@ -450,7 +456,7 @@ export default function CameraPage() {
               disabled={detectionBoxes.length === 0 || isDetecting}
             >
               <Save className="w-4 h-4 mr-1" />
-              Record
+              {t('record')}
             </Button>
           </div>
         </div>
@@ -461,12 +467,12 @@ export default function CameraPage() {
             {/* Header */}
             <div className="flex items-center text-gray-400 text-sm border-b border-gray-700 pb-2 mb-2">
               <Clock className="w-4 h-4 mr-2 text-gray-400" />
-              <h3 className="text-base font-medium text-white"> Today's detection history </h3>
+              <h3 className="text-base font-medium text-white"> {t('historyTitle')} </h3>
             </div>
           
             {/* Empty state */}
             {detectionHistory.length === 0 ? (
-              <p className="text-gray-500 text-sm text-center">No detection history</p>
+              <p className="text-gray-500 text-sm text-center">{t('noHistory')}</p>
             ) : (
               <div className="space-y-3">
                 {detectionHistory.map((entry) => (
@@ -477,11 +483,11 @@ export default function CameraPage() {
                     <div className="font-semibold text-blue-400">
                       {formatTime(entry.timestamp)}
                     </div>
-                    <div>Total: {entry.totalCount}</div>
+                    <div>{t('total')}: {entry.totalCount}</div>
                     {Object.entries(entry.typeCounts).map(([type, count]) => (
                       <div key={type} className="flex justify-between text-sm">
-                        <span>Type: {type}</span>
-                        <span>Qty: {count}</span>
+                        <span>{t('type')}: {type}</span>
+                        <span>{t('qty')}: {count}</span>
                       </div>
                     ))}
                   </div>

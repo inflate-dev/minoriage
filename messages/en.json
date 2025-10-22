@@ -1,0 +1,166 @@
+{
+  "login": {
+    "title": "Item Counting System",
+    "description": "Please log in to the Item Counting System.",
+    "tabLogin": "Login",
+    "tabSignup": "Signup",
+    "email": "Email",
+    "password": "Password",
+    "loginBtn": "Login",
+    "loginLoading": "Logging in...",
+    "signupBtn": "Create Account",
+    "signupLoading": "Creating...",
+    "placeholderEmail": "your@email.com",
+    "placeholderPassword": "Enter your password",
+    "toastCreate": "Account created successfully",
+    "toastFail": "Account creation failed",
+    "taostLoginError": "Login failed",
+    "toastLoginFail": "Login failed. Username or password is incorrect",
+    "enterEmail": "your@email.com",
+    "enterPassword": "Enter your password"
+  },
+  "camera": {
+    "title": "Counting System",
+    "detecting": "Detecting...",
+    "total": "Total",
+    "type": "Type",
+    "qty": "Qty",
+    "noDetections": "No detections",
+    "capture": "Capture",
+    "retry": "Retry",
+    "record": "Record",
+    "historyTitle": "Today's detection history",
+    "noHistory": "No detection history",
+    "startCameraError": "Failed to start camera",
+    "saveError": "Failed to save detection results",
+    "saveSuccess": "Detection results saved",
+    "noDetectionResult": "No detection results to save",
+    "detectFail": "Detection failed",
+    "detectSuccess": "Inference complete✅"
+  },
+  "dashboard": {
+    "title": "Inventory Dashboard",
+    "description": "View detailed reports including inventory status, sales trends, and efficiency based on the detection data.",
+    "export": "Export CSV",
+
+    "inventorySummaryTitle": "Today's Inventory Summary",
+    "inventoryItem": "Item",
+    "inventoryCount": "Count",
+    "inventorySold": "Sold",
+    "noData": "No data for selected date",
+
+    "salesTotal": "Total Sales",
+    "salesMonth": "Sales This Month",
+
+    "rangeLabel": "Range",
+    "dateLabel": "Date",
+    "rangeDay": "Day",
+    "rangeWeek": "Week",
+    "rangeMonth": "Month",
+    "rangeYear": "Year",
+
+    "chartTotal": "Total Count",
+
+    "quickStats": {
+      "detectedToday": "Items Detected Today",
+      "totalItems": "Total Detected Items",
+      "salesEfficiency": "Sales Efficiency",
+      "vsYesterday": "+12% vs yesterday",
+      "currentStock": "Current Stock",
+      "vsLastWeek": "+5% vs last week"
+    },
+
+    "headerTitle": "Dashboard",
+    "error": "Error occurred",
+    "loading": "Loading..."
+  },
+  "settings": {
+    "title": "Settings",
+    "detection": {
+      "title": "Detection Settings",
+      "description": "Configure item detection functionality",
+      "modeLabel": "Item Detection Mode",
+      "modeHint": "Select a method for detecting and counting items from the captured image.",
+      "aiMode": "AI Mode",
+      "apiMode": "chatGPT Mode",
+      "refMode": "Reference Mode",
+      "highAccuracy": "High Accuracy Mode",
+      "highAccuracyHint": "Capture in high resolution for more accurate results",
+      "threshold": "Threshold",
+      "thresholdHint": "Confidence threshold for detections (0.1–1.0)",
+      "maxDetections": "Max Detections",
+      "maxDetectionsHint": "Maximum number of item types to process per detection",
+      "uploadSuccess": "Sample image uploaded!",
+      "uploadFail": "Failed to upload image",
+      "uploadWarning": "No image URL returned",
+      "uploadLimit": "Image size exceeds 5MB limit",
+      "uploadType": "Only JPG image files are allowed"
+    },
+
+    "data": {
+      "title": "Data Settings",
+      "description": "Manage data saving and sync options",
+      "autoSave": "Auto Save",
+      "autoSaveHint": "Automatically save detection results to database"
+    },
+
+    "system": {
+      "title": "System Info",
+      "description": "App and device status",
+      "connection": "Connection",
+      "battery": "Battery",
+      "version": "App Version",
+      "lastSync": "Last Sync",
+      "storage": "Storage Usage"
+    },
+
+    "saveBtn": "Save Settings",
+    "saveSuccess": "Settings saved successfully"
+  },
+  "account": {
+    "title": "Account Settings",
+
+    "profile": {
+      "title": "Personal Info",
+      "edit": "Edit",
+      "save": "Save",
+      "cancel": "Cancel",
+      "name": "Name",
+      "email": "Email",
+      "joined": "Joined"
+    },
+
+    "security": {
+      "title": "Security Settings",
+      "description": "Manage your password and two-factor authentication",
+      "changePassword": "Change password",
+      "setup2fa": "Set up 2FA"
+    },
+
+    "subscription": {
+      "title": "Subscription Plan",
+      "description": "View or manage your current plan",
+      "currentPlan": "Current Plan",
+      "month": "month",
+      "manage": "Manage Plan"
+    },
+
+    "data": {
+      "title": "Account & Data",
+      "description": "Manage your account or delete it permanently",
+      "delete": "Delete Account",
+      "deleteWarning": "Account deletion feature is under development"
+    },
+
+    "logout": {
+      "button": "Sign Out",
+      "success": "Logged out successfully",
+      "fail": "Failed to log out:"
+    },
+
+    "toast": {
+      "profileUpdated": "Profile updated successfully",
+      "upgraded": "Thank you for upgrading your plan! 🎉"
+    }
+  }
+}

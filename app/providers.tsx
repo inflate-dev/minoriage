@@ -1,14 +1,38 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppStore } from '@/lib/store';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
+import { IntlProvider } from 'next-intl'
+import { messages as allMessages, Locale } from '../messages'
 
-export function Providers({ children }: { children: React.ReactNode }) {
+type Props = {
+  children: React.ReactNode
+}
+
+export function Providers({ children }: Props) {
   const setUser = useAppStore((state) => state.setUser);
   const user = useAppStore((state) => state.user);
   const router = useRouter();
+  const [locale, setLocale] = useState<Locale>('en')
+
+  useEffect(() => {
+    const savedLocale = (localStorage.getItem('locale') as Locale) || 'en'
+    setLocale(savedLocale)
+  }, [])
+
+  useEffect(() => {
+    const onLocaleChange = (e: CustomEvent<Locale>) => {
+      setLocale(e.detail)
+    }
+
+    window.addEventListener('locale-change', onLocaleChange as EventListener)
+
+    return () => {
+      window.removeEventListener('locale-change', onLocaleChange as EventListener)
+    }
+  }, [])
 
   useEffect(() => {
     const checkLoginTimeout = async () => {
@@ -48,5 +72,11 @@ export function Providers({ children }: { children: React.ReactNode }) {
     }
   }, [setUser, router])
 
-  return <>{children}</>;
+  if (!locale || !allMessages[locale]) return null
+
+  return (
+    <IntlProvider locale={locale} messages={allMessages[locale]}>
+      {children}
+    </IntlProvider>
+  )
 }

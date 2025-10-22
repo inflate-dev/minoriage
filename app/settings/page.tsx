@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -8,18 +9,15 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { useAppStore } from '@/lib/store';
-import { Plus } from 'lucide-react';
+import { Plus, Settings } from 'lucide-react';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { toast } from 'sonner';
 import { supabase } from '@/lib/supabase';
 import { 
-  Bell, 
   Camera, 
   Smartphone, 
   Database, 
-  Shield, 
-  Palette,
-  Volume2,
   Wifi,
   Battery,
   Save
@@ -28,6 +26,7 @@ import {
 const SERVER_URL = process.env.NEXT_PUBLIC_LOCAL_SERVER_URL;
 
 export default function SettingsPage() {
+  const t = useTranslations('settings')
   const user = useAppStore((state) => state.user);
   const { detectionMode, setDetectionMode } = useAppStore();
   const [highQuality, setHighQuality] = useState(false);
@@ -41,7 +40,7 @@ export default function SettingsPage() {
 
   const handleSaveSettings = () => {
     // Here you would save settings to database or local storage
-    toast.success('Settings saved successfully');
+    toast.success(t('saveSuccess'));
   };
 
   useEffect(() => {
@@ -105,7 +104,7 @@ export default function SettingsPage() {
     // ここでAPIに送信する処理を追加することもできます
     // 例えば、fetchを使って送信することができます
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size exceeds 5MB limit');
+      toast.error(t('detection.uploadLimit'));
       return;
     }
 
@@ -113,7 +112,7 @@ export default function SettingsPage() {
     const isImage = file.type.startsWith('image/') && file.type === 'image/jpeg';
 
     if (!isImage || !isJPG) {
-      toast.error('Only JPG image files are allowed');
+      toast.error(t('detection.uploadType'));
       return;
     }
 
@@ -132,14 +131,14 @@ export default function SettingsPage() {
       // 例: アップロード後に画像のURLが返ってくると仮定
       if (data?.url) {
         setSampleImages([...sampleImages, data.url]);
-        toast.success('Sample image uploaded!');
+        toast.success(t('detection.uploadSuccess'));
       } else {
-        toast.warning('No image URL returned');
+        toast.warning(t('detection.uploadWarning'));
       }
 
     } catch (err) {
       console.error('Upload error:', err);
-      toast.error('Failed to upload image');
+      toast.error(t('detection.uploadFail'));
     }
 
 
@@ -158,7 +157,13 @@ export default function SettingsPage() {
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
-            <h1 className="text-xl font-bold text-gray-900">Settings</h1>
+            <div className="p-2 bg-blue-600 rounded-lg mr-3">
+              <Settings className="w-6 h-6 text-white" />
+            </div>
+            <h1 className="text-xl font-bold text-gray-900">{t('title')}</h1>
+            <div className="ml-auto">
+              <LanguageSwitcher/>
+            </div>
           </div>
         </div>
       </header>
@@ -171,10 +176,10 @@ export default function SettingsPage() {
             <CardHeader>
               <div className="flex items-center">
                 <Camera className="w-5 h-5 mr-2 text-blue-600" />
-                <CardTitle>Detection Settings</CardTitle>
+                <CardTitle>{t('detection.title')}</CardTitle>
               </div>
               <CardDescription>
-                Configure item detection functionality
+                {t('detection.description')}
               </CardDescription>
             </CardHeader>
 
@@ -182,9 +187,9 @@ export default function SettingsPage() {
             <CardContent className="space-y-6">
               <div className="flex flex-col space-y-6">
                 <div className="space-y-0.5">
-                  <Label className="text-base">Item Detection Mode</Label>
+                  <Label className="text-base">{t('detection.modeLabel')}</Label>
                   <div className="text-sm text-gray-600">
-                    Select a method for detecting and counting items from the captured image.
+                    {t('detection.modeHint')}
                   </div>
                 </div>
                                 
@@ -199,7 +204,7 @@ export default function SettingsPage() {
                     onChange={() => setDetectionMode('ai')}
                     className="mt-1 form-radio text-blue-700"
                   />
-                  <label htmlFor="ai" className="text-lg font-medium">AI Mode</label>
+                  <label htmlFor="ai" className="text-lg font-medium">{t('detection.aiMode')}</label>
                 </div>
                 {/* API Mode */}
                 <div className="flex items-start space-x-3">
@@ -212,7 +217,7 @@ export default function SettingsPage() {
                     onChange={() => setDetectionMode('api')}
                     className="mt-1 form-radio text-blue-700"
                   />
-                  <label htmlFor="api" className="text-lg font-medium">chatGPT Mode</label>
+                  <label htmlFor="api" className="text-lg font-medium">{t('detection.apiMode')}</label>
                 </div>
                
                 {/* ref Mode */}
@@ -226,7 +231,7 @@ export default function SettingsPage() {
                     onChange={() => setDetectionMode('ref')}
                     className="mt-1 form-radio text-blue-700"
                   />
-                  <label htmlFor="sample" className="text-lg font-medium">Reference Mode</label>
+                  <label htmlFor="sample" className="text-lg font-medium">{t('detection.refMode')}</label>
                 </div>
                 {/* Sample Images (only visible when sample mode is selected) */}
                 {detectionMode === 'ref' && (
@@ -257,9 +262,9 @@ export default function SettingsPage() {
               {/* Hight Quality Mode */}
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label className="text-base">High Accuracy Mode</Label>
+                  <Label className="text-base">{t('detection.highAccuracy')}</Label>
                   <div className="text-sm text-gray-600">
-                    Capture in high resolution for more accurate results
+                    {t('detection.highAccuracyHint')}
                   </div>
                 </div>
                 <Switch
@@ -269,7 +274,7 @@ export default function SettingsPage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="threshold">Threshold</Label>
+                <Label htmlFor="threshold">{t('detection.threshold')}</Label>
                 <Input
                   id="threshold"
                   type="number"
@@ -281,12 +286,12 @@ export default function SettingsPage() {
                   className="w-full"
                 />
                 <div className="text-sm text-gray-600">
-                  Confidence threshold for detections.1-1.0）
+                  {t('detection.thresholdHint')}
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="maxDetections">Max Detections</Label>
+                <Label htmlFor="maxDetections">{t('detection.maxDetections')}</Label>
                 <Input
                   id="maxDetections"
                   type="number"
@@ -297,7 +302,7 @@ export default function SettingsPage() {
                   className="w-full"
                 />
                 <div className="text-sm text-gray-600">
-                  Maximum number of item types to process per detection
+                  {t('detection.maxDetectionsHint')}
                 </div>
               </div>
             </CardContent>
@@ -308,18 +313,18 @@ export default function SettingsPage() {
             <CardHeader>
               <div className="flex items-center">
                 <Database className="w-5 h-5 mr-2 text-green-600" />
-                <CardTitle>Data Settings</CardTitle>
+                <CardTitle>{t('data.title')}</CardTitle>
               </div>
               <CardDescription>
-                Manage data saving and sync options
+                {t('data.description')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
-                  <Label className="text-base">Auto Save</Label>
+                  <Label className="text-base">{t('data.autoSave')}</Label>
                   <div className="text-sm text-gray-600">
-                    Automatically save detection results to database
+                    {t('data.autoSaveHint')}
                   </div>
                 </div>
                 <Switch
@@ -335,22 +340,22 @@ export default function SettingsPage() {
             <CardHeader>
               <div className="flex items-center">
                 <Smartphone className="w-5 h-5 mr-2 text-purple-600" />
-                <CardTitle>System Info</CardTitle>
+                <CardTitle>{t('system.title')}</CardTitle>
               </div>
               <CardDescription>
-                App and device status
+                {t('system.description')}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex items-center space-x-2">
                   <Wifi className="w-4 h-4 text-green-500" />
-                  <span className="text-sm">Connection: {connectionType}</span>
+                  <span className="text-sm">{t('system.connection')}: {connectionType}</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Battery className="w-4 h-4 text-green-500" />
                   <span className="text-sm">
-                    Battery: {batteryLevel !== null ? `${batteryLevel}%` : 'Loading...'}
+                    {t('system.battery')}: {batteryLevel !== null ? `${batteryLevel}%` : 'Loading...'}
                   </span>
                 </div>
               </div>
@@ -358,9 +363,9 @@ export default function SettingsPage() {
               <Separator />
               
               <div className="space-y-2 text-sm text-gray-600">
-                <div>App Version: 1.0.0</div>
-                <div>Last Sync: 2 minutes ago</div>
-                <div>Storage Usage: {storageUsage}</div>
+                <div>{t('system.version')}: 1.0.0</div>
+                <div>{t('system.lastSync')}: 2 minutes ago</div>
+                <div>{t('system.storage')}: {storageUsage}</div>
               </div>
             </CardContent>
           </Card>
@@ -369,7 +374,7 @@ export default function SettingsPage() {
           <div className="flex justify-center">
             <Button onClick={handleSaveSettings} size="lg" className="w-full max-w-md">
               <Save className="w-4 h-4 mr-2" />
-              Save Settings
+              {t('saveBtn')}
             </Button>
           </div>
         </div>

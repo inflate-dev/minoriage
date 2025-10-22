@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useTranslations } from 'next-intl'
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
@@ -10,9 +11,11 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { Loader2, Wheat, User } from 'lucide-react';
+import { LanguageSwitcher } from '@/components/LanguageSwitcher'
+import { Loader2, Wheat } from 'lucide-react';
 
 export default function LoginPage() {
+  const t = useTranslations('login')
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -51,12 +54,12 @@ export default function LoginPage() {
           router.replace('/camera'); // ←ここでリダイレクト
         } else {
           console.error('Login failed', result)
-          setError("Login failed.\nUsername or password is incorrect");
+          setError(t('toastLoginFail'));
         }
       }
       login();
     } catch (error: any) {
-      toast.error(error.message || 'ログインに失敗しました');
+      toast.error(error.message || t('taostLoginError'));
     } finally {
       setLoading(false);
     }
@@ -74,17 +77,21 @@ export default function LoginPage() {
 
       if (error) throw error;
 
-      toast.success('Account created successfully');
+      toast.success(t('toastCreate'));
       setUser(data.user);
       router.push('/dashboard');
     } catch (error: any) {
-      toast.error(error.message || 'Account creation failed');
+      toast.error(error.message || t('toastFail'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
+  <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+    <header className="bg-white shadow-sm border-b px-4 py-2 flex justify-end">
+      <LanguageSwitcher />
+    </header>
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
@@ -94,38 +101,38 @@ export default function LoginPage() {
             </div>
           </div>
           <CardTitle className="text-2xl font-bold text-gray-900">
-            Item Counting System
+            {t('title')}
           </CardTitle>
           <CardDescription>
-            Please log in to the Item Counting System.
+            {t('description')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">Login</TabsTrigger>
-              <TabsTrigger value="signup">Signup</TabsTrigger>
+              <TabsTrigger value="login">{t('tabLogin')}</TabsTrigger>
+              <TabsTrigger value="signup">{t('tabSignup')}</TabsTrigger>
             </TabsList>
             
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t('email')}</Label>
                   <Input
                     id="email"
                     type="email"
-                    placeholder="your@email.com"
+                    placeholder={t('enterEmail')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">{t('password')}</Label>
                   <Input
                     id="password"
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder={t('enterPassword')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -135,10 +142,10 @@ export default function LoginPage() {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Logging in...
+                      {t('loginLoading')}
                     </>
                   ) : (
-                    'Login'
+                    t('loginBtn')
                   )}
                 </Button>
               </form>
@@ -147,22 +154,22 @@ export default function LoginPage() {
             <TabsContent value="signup">
               <form onSubmit={handleSignUp} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email">Email</Label>
+                  <Label htmlFor="signup-email">{t('email')}</Label>
                   <Input
                     id="signup-email"
                     type="email"
-                    placeholder="your@email.com"
+                    placeholder={t('enterEmail')}
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password">Password</Label>
+                  <Label htmlFor="signup-password">{t('password')}</Label>
                   <Input
                     id="signup-password"
                     type="password"
-                    placeholder="Enter your password"
+                    placeholder={t('enterPassword')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
@@ -172,10 +179,10 @@ export default function LoginPage() {
                   {loading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Creating...
+                      {t('signupLoading')}
                     </>
                   ) : (
-                    'Create Account'
+                    t('signupBtn')
                   )}
                 </Button>
               </form>
@@ -184,5 +191,6 @@ export default function LoginPage() {
         </CardContent>
       </Card>
     </div>
+  </div>
   );
 }

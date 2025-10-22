@@ -1,0 +1,169 @@
+{
+  "login": {
+    "title": "Sistem Penghitungan Barang",
+    "description": "Silakan masuk ke Sistem Penghitungan Barang.",
+    "tabLogin": "Masuk",
+    "tabSignup": "Daftar",
+    "email": "Email",
+    "password": "Kata Sandi",
+    "loginBtn": "Masuk",
+    "loginLoading": "Sedang masuk...",
+    "signupBtn": "Buat Akun",
+    "signupLoading": "Sedang membuat...",
+    "placeholderEmail": "nama@email.com",
+    "placeholderPassword": "Masukkan kata sandi",
+    "toastCreate": "Akun berhasil dibuat",
+    "toastFail": "Gagal membuat akun",
+    "taostLoginError": "Login gagal",
+    "toastLoginFail": "Login gagal. Nama pengguna atau kata sandi salah",
+    "enterEmail": "email@anda.com",
+    "enterPassword": "Masukkan kata sandi Anda"
+  },
+  "camera": {
+    "title": "Sistem Penghitungan",
+    "detecting": "Sedang mendeteksi...",
+    "total": "Total",
+    "type": "Jenis",
+    "qty": "Jumlah",
+    "noDetections": "Tidak ada deteksi",
+    "capture": "Ambil Gambar",
+    "retry": "Ulangi",
+    "record": "Catat",
+    "historyTitle": "Riwayat deteksi hari ini",
+    "noHistory": "Belum ada riwayat deteksi",
+    "startCameraError": "Gagal mengaktifkan kamera",
+    "saveError": "Gagal menyimpan hasil deteksi",
+    "saveSuccess": "Hasil deteksi berhasil disimpan",
+    "noDetectionResult": "Tidak ada hasil deteksi untuk disimpan",
+    "detectFail": "Deteksi gagal",
+    "detectSuccess": "Inferensi selesai✅"
+  },
+
+  "dashboard": {
+    "title": "Dasbor Inventaris",
+    "description": "Lihat laporan detail termasuk status inventaris, tren penjualan, dan efisiensi berdasarkan data deteksi.",
+    "export": "Ekspor CSV",
+
+    "inventorySummaryTitle": "Ringkasan Inventaris Hari Ini",
+    "inventoryItem": "Barang",
+    "inventoryCount": "Jumlah",
+    "inventorySold": "Terjual",
+    "noData": "Tidak ada data untuk tanggal yang dipilih",
+
+    "salesTotal": "Total Penjualan",
+    "salesMonth": "Penjualan Bulan Ini",
+
+    "rangeLabel": "Rentang",
+    "dateLabel": "Tanggal",
+    "rangeDay": "Harian",
+    "rangeWeek": "Mingguan",
+    "rangeMonth": "Bulanan",
+    "rangeYear": "Tahunan",
+
+    "chartTotal": "Jumlah Total",
+
+    "quickStats": {
+      "detectedToday": "Barang Terdeteksi Hari Ini",
+      "totalItems": "Total Barang Terdeteksi",
+      "salesEfficiency": "Efisiensi Penjualan",
+      "vsYesterday": "+12% dibanding kemarin",
+      "currentStock": "Stok Saat Ini",
+      "vsLastWeek": "+5% dibanding minggu lalu"
+    },
+
+    "headerTitle": "Dasbor",
+    "error": "Terjadi kesalahan",
+    "loading": "Memuat..."
+  },
+
+  "settings": {
+    "title": "Pengaturan",
+    "detection": {
+      "title": "Pengaturan Deteksi",
+      "description": "Atur fungsi deteksi barang",
+      "modeLabel": "Mode Deteksi Barang",
+      "modeHint": "Pilih metode untuk mendeteksi dan menghitung barang dari gambar yang diambil.",
+      "aiMode": "Mode AI",
+      "apiMode": "Mode chatGPT",
+      "refMode": "Mode Referensi",
+      "highAccuracy": "Mode Akurasi Tinggi",
+      "highAccuracyHint": "Ambil gambar dengan resolusi tinggi untuk hasil yang lebih akurat",
+      "threshold": "Ambang Batas",
+      "thresholdHint": "Tingkat keyakinan untuk deteksi (0.1–1.0)",
+      "maxDetections": "Deteksi Maksimum",
+      "maxDetectionsHint": "Jumlah maksimum jenis barang yang diproses per deteksi",
+      "uploadSuccess": "Gambar sampel berhasil diunggah!",
+      "uploadFail": "Gagal mengunggah gambar",
+      "uploadWarning": "Tidak ada URL gambar yang dikembalikan",
+      "uploadLimit": "Ukuran gambar melebihi batas 5MB",
+      "uploadType": "Hanya file gambar JPG yang diperbolehkan"
+    },
+
+    "data": {
+      "title": "Pengaturan Data",
+      "description": "Kelola penyimpanan dan sinkronisasi data",
+      "autoSave": "Simpan Otomatis",
+      "autoSaveHint": "Simpan hasil deteksi ke database secara otomatis"
+    },
+
+    "system": {
+      "title": "Info Sistem",
+      "description": "Status aplikasi dan perangkat",
+      "connection": "Koneksi",
+      "battery": "Baterai",
+      "version": "Versi Aplikasi",
+      "lastSync": "Sinkronisasi Terakhir",
+      "storage": "Penggunaan Penyimpanan"
+    },
+
+    "saveBtn": "Simpan Pengaturan",
+    "saveSuccess": "Pengaturan berhasil disimpan"
+  },
+
+  "account": {
+    "title": "Pengaturan Akun",
+
+    "profile": {
+      "title": "Informasi Pribadi",
+      "edit": "Edit",
+      "save": "Simpan",
+      "cancel": "Batal",
+      "name": "Nama",
+      "email": "Email",
+      "joined": "Bergabung"
+    },
+
+    "security": {
+      "title": "Pengaturan Keamanan",
+      "description": "Kelola kata sandi dan autentikasi dua faktor Anda",
+      "changePassword": "Ubah Kata Sandi",
+      "setup2fa": "Atur 2FA"
+    },
+
+    "subscription": {
+      "title": "Paket Langganan",
+      "description": "Lihat atau kelola paket langganan Anda saat ini",
+      "currentPlan": "Paket Saat Ini",
+      "month": "bulan",
+      "manage": "Kelola Paket"
+    },
+
+    "data": {
+      "title": "Akun & Data",
+      "description": "Kelola akun Anda atau hapus secara permanen",
+      "delete": "Hapus Akun",
+      "deleteWarning": "Fitur penghapusan akun sedang dalam pengembangan"
+    },
+
+    "logout": {
+      "button": "Keluar",
+      "success": "Berhasil keluar",
+      "fail": "Gagal keluar"
+    },
+
+    "toast": {
+      "profileUpdated": "Profil berhasil diperbarui",
+      "upgraded": "Terima kasih telah meningkatkan paket Anda! 🎉"
+    }
+  }
+}
