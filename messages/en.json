@@ -12,11 +12,27 @@
     "signupLoading": "Creating...",
     "placeholderEmail": "your@email.com",
     "placeholderPassword": "Enter your password",
-    "toastCreate": "Account created successfully",
     "toastFail": "Account creation failed",
     "taostLoginError": "Login failed",
     "toastLoginFail": "Login failed. Username or password is incorrect",
     "enterEmail": "your@email.com",
+    "enterPassword": "Enter your password",
+    "registerUser": "Register User"
+  },
+  "signup": {
+    "title": "Sign Up",
+    "name": "Name",
+    "companyName": "Company Name",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "signupBtn": "Sign Up",
+    "signupLoading": "Signing up...",
+    "haveAccount": "Already have an account? Sign In",
+    "toastPasswordMismatch": "Passwords do not match",
+    "toastSignupFail": "Signup failed. Please try again.",
+    "toastCreate": "Account created successfully",
+    "placeholderEmail": "your@email.com",
     "enterPassword": "Enter your password"
   },
   "camera": {

@@ -17,8 +17,23 @@
     "taostLoginError": "Login gagal",
     "toastLoginFail": "Login gagal. Nama pengguna atau kata sandi salah",
     "enterEmail": "email@anda.com",
-    "enterPassword": "Masukkan kata sandi Anda"
+    "enterPassword": "Masukkan kata sandi Anda",
+    "registerUser": "Daftar Pengguna"
   },
+  "signup": {
+  "title": "Daftar",
+  "name": "Nama",
+  "companyName": "Nama Perusahaan",
+  "email": "Email",
+  "password": "Kata Sandi",
+  "confirmPassword": "Konfirmasi Kata Sandi",
+  "signupBtn": "Daftar",
+  "signupLoading": "Sedang mendaftar...",
+  "haveAccount": "Sudah punya akun? Masuk",
+  "toastPasswordMismatch": "Kata sandi tidak cocok",
+  "toastSignupFail": "Pendaftaran gagal. Silakan coba lagi.",
+  "placeholderEmail": "email@anda.com"
+  }, 
   "camera": {
     "title": "Sistem Penghitungan",
     "detecting": "Sedang mendeteksi...",

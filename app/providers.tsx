@@ -15,7 +15,12 @@ export function Providers({ children }: Props) {
   const setUser = useAppStore((state) => state.setUser);
   const user = useAppStore((state) => state.user);
   const router = useRouter();
-  const [locale, setLocale] = useState<Locale>('en')
+  const [locale, setLocale] = useState<Locale>(() => {
+    if (typeof window !== 'undefined') {
+      return (localStorage.getItem('locale') as Locale) || 'en'
+    }
+    return 'en'}
+  )
 
   useEffect(() => {
     const savedLocale = (localStorage.getItem('locale') as Locale) || 'en'
