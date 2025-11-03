@@ -22,17 +22,19 @@
   },
   "signup": {
     "title": "ユーザー登録",
-    "name": "名前",
-    "companyName": "会社名",
-    "email": "メールアドレス",
-    "password": "パスワード",
-    "confirmPassword": "パスワード（確認）",
+    "name": "名前 ※必須",
+    "companyName": "会社名 ※任意",
+    "email": "メールアドレス ※必須",
+    "password": "パスワード ※必須",
+    "confirmPassword": "パスワード（確認） ※必須",
     "signupBtn": "登録する",
     "signupLoading": "登録中...",
     "haveAccount": "すでにアカウントをお持ちですか？ログイン",
     "toastPasswordMismatch": "パスワードが一致しません",
     "toastSignupFail": "登録に失敗しました。もう一度お試しください。",
-    "placeholderEmail": "your@email.com"
+    "placeholderEmail": "your@email.com",
+    "enterPassword": "パスワード入力",
+    "enterConfirmPassword": "確認用パスワード入力"
   },
   "camera": {
     "title": "Counting System",
@@ -75,9 +77,9 @@
       "detectedToday": "今日検出されたアイテム",
       "totalItems": "検出済みアイテム総数",
       "salesEfficiency": "販売効率",
-      "vsYesterday": "昨日比 +12%",
+      "vsYesterday": "% 昨日比 ",
       "currentStock": "現在の在庫",
-      "vsLastWeek": "先週比 +5%"
+      "vsLastWeek": "+5% 先週比"
     },
     "headerTitle": "ダッシュボード",
     "error": "エラーが発生しました",

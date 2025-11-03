@@ -41,58 +41,17 @@ export default function DashboardPage() {
   const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10))
   const [chartData, setChartData] = useState<ChartData[]>([]);
 
-  useEffect(() => {
-    const getUser = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session) {
-        setUser(session.user);
-      }
-    };
-    getUser();
-  }, [setUser]);
-
-  useEffect(() => {
-    let newChartData: ChartData[] = [];
-
-    if (range === 'day') {
-      newChartData = Array.from({ length: 12 }, (_, i) => {
-        const hour = i * 2
-        return {
-          hour: `${String(hour).padStart(2, '0')}:00`,
-          total: Math.floor(Math.random() * 10), // 仮データ
-        }
-      })
-    } else if (range === 'week') {
-      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-      newChartData = days.map(day => ({
-        day,
-        total: Math.floor(Math.random() * 50),
-      }))
-    } else if (range === 'month') {
-      newChartData = Array.from({ length: 30 }, (_, i) => ({
-        day: `${i + 1}`,
-        total: Math.floor(Math.random() * 50),
-      }))
-    } else if (range === 'year') {
-      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
-      newChartData = months.map(month => ({
-        month,
-        total: Math.floor(Math.random() * 300),
-      }))
-    }
-
-    setChartData(newChartData)
-  }, [range])
-
   // from と to を range + date から計算する関数（簡易版）
   const getFromTo = (): { from: string; to: string } => {
     const d = new Date(date)
     let from = ''
     let to = ''
     if (range === 'day') {
-      from = '2025-10-01'
-      //from = date
-      to = date
+      from = date
+  
+      const next = new Date(date);
+      next.setDate(next.getDate() + 1);
+      to = next.toISOString().slice(0, 10);
     } else if (range === 'week') {
       // 例：その日を含む1週間前〜その日
       const prev = new Date(d)
@@ -111,10 +70,15 @@ export default function DashboardPage() {
     return { from, to }
   }
 
+  const getLocalTimezone = () => {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+  }
+
   const { from, to } = getFromTo()
+  const tz = getLocalTimezone();
 
   const { data, error, isLoading } = useSWR<InventoryData[]>(
-    user ? `/api/inventory-summary?from=${from}&to=${to}` : null,
+    user ? `/api/inventory-summary?from=${from}&to=${to}&tz=${tz}` : null,
     fetcher,
     {
       keepPreviousData: true
@@ -125,11 +89,126 @@ export default function DashboardPage() {
     return <div>{t('error')}</div>
   }
 
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUser(session.user);
+      }
+    };
+    getUser();
+  }, [setUser]);
+
+  useEffect(() => {
+    if (!data) return;
+
+    const newChartData: ChartData[] = [];
+    const dailyTotals: Record<string, number> = {};
+    
+    if (range === 'day') {
+      // "2025-11-01 08:00" 〜 "2025-11-01 22:00" などを2時間ごとに集計
+      data.forEach(record => {
+        const date = new Date(record.date);
+        const hour = date.getHours();
+        const slot = `${String(Math.floor(hour / 2) * 2).padStart(2, '0')}:00`;
+
+        dailyTotals[slot] = (dailyTotals[slot] || 0) + Object.values(record.items).reduce((a, b) => a + b, 0);
+      });
+
+      for (let i = 0; i < 24; i += 2) {
+        const label = `${String(i).padStart(2, '0')}:00`;
+        newChartData.push({
+          hour: label,
+          total: dailyTotals[label] || 0,
+        });
+      }
+    } else if (range === 'week') {
+      const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      data.forEach(record => {
+        const day = new Date(record.date).getDay(); // 0〜6
+        const label = dayLabels[day];
+        dailyTotals[label] = (dailyTotals[label] || 0) + Object.values(record.items).reduce((a, b) => a + b, 0);
+      });
+
+      dayLabels.forEach(label => {
+        newChartData.push({
+          day: label,
+          total: dailyTotals[label] || 0,
+        });
+      });
+    } else if (range === 'month') {
+      data.forEach(record => {
+        const day = new Date(record.date).getDate(); // 1〜31
+        const label = String(day);
+        dailyTotals[label] = (dailyTotals[label] || 0) + Object.values(record.items).reduce((a, b) => a + b, 0);
+      });
+
+      const daysInMonth = new Date(new Date(date).getFullYear(), new Date(date).getMonth() + 1, 0).getDate();
+
+      for (let i = 1; i <= daysInMonth; i++) {
+        const label = String(i);
+        newChartData.push({
+          day: label,
+          total: dailyTotals[label] || 0,
+        });
+      }
+    } else if (range === 'year') {
+      const monthLabels  = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec']
+      data.forEach(record => {
+        const month = new Date(record.date).getMonth(); // 0〜11
+        const label = monthLabels[month];
+        dailyTotals[label] = (dailyTotals[label] || 0) + Object.values(record.items).reduce((a, b) => a + b, 0);
+      });
+
+      monthLabels.forEach(label => {
+        newChartData.push({
+          month: label,
+          total: dailyTotals[label] || 0,
+        });
+      });
+    }
+
+    setChartData(newChartData)
+  }, [range, data, date])
+
   if (isLoading) return <div>{t('loading')}</div>
 
-  // 今日のサマリ（range=day のときだけ表示したいかも）
-  const todayRecord = data?.find(r => r.date === date)
+  // Quick Statsの情報、今日のサマリを取得
+  const today = new Date().toISOString().slice(0, 10);
+  const todayRecord = data?.find(r => r.date === today)
 
+  const detectedToday = todayRecord
+    ? Object.values(todayRecord.items).reduce((a, b) => a + b, 0)
+    : 0;
+
+  const totalDetectedItems = data
+    ? data.reduce((sum, record) => {
+        return sum + Object.values(record.items).reduce((a, b) => a + b, 0);
+      }, 0)
+    : 0;
+
+  const yesterday = (() => {
+    const d = new Date(date);
+    d.setDate(d.getDate() - 1);
+    return d.toISOString().slice(0, 10);
+  })();
+
+  const yesterdayRecord = data?.find(d => d.date === yesterday);
+  const yesterdayCount = yesterdayRecord
+    ? Object.values(yesterdayRecord.items).reduce((a, b) => a + b, 0)
+    : 0;
+
+  console.log('Yesterday Count:', yesterdayCount);
+  console.log('Detected Today:', detectedToday);
+  const deltaDayPercent = yesterdayCount > 0
+    ? Math.round(((detectedToday) / yesterdayCount) * 100)
+    : null; // or 0 or "--"
+
+  console.log('📦 SWR data full:', JSON.stringify(data, null, 2))
+  console.log('📅 selected date:', date)
+  console.log('📌 todayRecord:', todayRecord)
+
+  // CSVエクスポート処理
   const handleExportCSV = async () => {
     const { data, error } = await supabase
       .from('detections') // ←あなたのデータベース名に合わせてね
@@ -214,12 +293,11 @@ export default function DashboardPage() {
                 <tbody>
                   {todayRecord ? (
                     Object.entries(todayRecord.items).map(([item, count]) => {
-                      const sold = Math.floor(Math.random() * 40) // 仮の売上数
                       return (
                         <tr key={item} className="bg-gray-50 hover:bg-gray-100 rounded">
                           <td className="px-2 py-2 font-medium">{item}</td>
                           <td className="text-center">{count}</td>
-                          <td className="text-center text-red-500 font-semibold">{sold}</td>
+                          <td className="text-center text-red-500 font-semibold">$---</td>
                         </tr>
                       )
                     })  
@@ -313,9 +391,11 @@ export default function DashboardPage() {
               <Camera className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">24</div>
+              <div className="text-2xl font-bold">{detectedToday}</div>
               <p className="text-xs text-muted-foreground">
-                {t('quickStats.vsYesterday')}
+                {deltaDayPercent !== null
+                  ? `${deltaDayPercent > 0 ? '+' : ''}${deltaDayPercent}% ${t('quickStats.vsYesterday')}`
+                  : `-- ${t('quickStats.vsYesterday')}`}
               </p>
             </CardContent>
           </Card>
@@ -325,9 +405,9 @@ export default function DashboardPage() {
               <BarChartIcon className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">347</div>
+              <div className="text-2xl font-bold">{totalDetectedItems}</div>
               <p className="text-xs text-muted-foreground">
-                {t('quickStats.vsYesterday')}
+                {t('quickStats.vsLastMonth')}
               </p>
             </CardContent>
           </Card>
@@ -337,9 +417,11 @@ export default function DashboardPage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">92%</div>
+              <div className="text-2xl font-bold">-%</div>
               <p className="text-xs text-muted-foreground">
-                {t('quickStats.vsLastWeek')}
+                {deltaDayPercent !== null
+                  ? `${deltaDayPercent > 0 ? '+' : ''}${deltaDayPercent}% ${t('quickStats.vsYesterday')}`
+                  : `-- ${t('quickStats.vsYesterday')}`}
               </p>
             </CardContent>
           </Card>

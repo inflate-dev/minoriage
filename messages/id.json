@@ -21,18 +21,20 @@
     "registerUser": "Daftar Pengguna"
   },
   "signup": {
-  "title": "Daftar",
-  "name": "Nama",
-  "companyName": "Nama Perusahaan",
-  "email": "Email",
-  "password": "Kata Sandi",
-  "confirmPassword": "Konfirmasi Kata Sandi",
-  "signupBtn": "Daftar",
-  "signupLoading": "Sedang mendaftar...",
-  "haveAccount": "Sudah punya akun? Masuk",
-  "toastPasswordMismatch": "Kata sandi tidak cocok",
-  "toastSignupFail": "Pendaftaran gagal. Silakan coba lagi.",
-  "placeholderEmail": "email@anda.com"
+    "title": "Daftar",
+    "name": "Nama (wajib diisi)",
+    "companyName": "Nama Perusahaan",
+    "email": "Email (wajib diisi)",
+    "password": "Kata Sandi (wajib diisi)",
+    "confirmPassword": "Konfirmasi Kata Sandi (wajib diisi)",
+    "signupBtn": "Daftar",
+    "signupLoading": "Sedang mendaftar...",
+    "haveAccount": "Sudah punya akun? Masuk",
+    "toastPasswordMismatch": "Kata sandi tidak cocok",
+    "toastSignupFail": "Pendaftaran gagal. Silakan coba lagi.",
+    "placeholderEmail": "email@anda.com",
+    "enterPassword": "Masukkan kata sandi Anda",
+    "enterConfirmPassword": "Masukkan konfirmasi kata sandi"
   }, 
   "camera": {
     "title": "Sistem Penghitungan",
@@ -81,7 +83,7 @@
       "detectedToday": "Barang Terdeteksi Hari Ini",
       "totalItems": "Total Barang Terdeteksi",
       "salesEfficiency": "Efisiensi Penjualan",
-      "vsYesterday": "+12% dibanding kemarin",
+      "vsYesterday": "dibanding kemarin",
       "currentStock": "Stok Saat Ini",
       "vsLastWeek": "+5% dibanding minggu lalu"
     },

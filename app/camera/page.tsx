@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { toast } from 'sonner';
+import { DateTime } from 'luxon';
 import { Camera, RotateCcw, Save, Loader2, Clock } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 
@@ -70,21 +71,25 @@ export default function CameraPage() {
   // Load today's detection history from Supabase
   const loadHistory = async  () => {
     // 今日の00:00:00をISO文字列で作成（UTC対応）
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
-    const todayStartISO = todayStart.toISOString();
+  const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+  const todayStartUTC = DateTime.now()
+    .setZone(localTz)
+    .startOf('day')
+    .toUTC()
+    .toISO();
 
     const { data, error } = await supabase
-    .from('detections')
-    .select(`
-      upload_id,
-      object_type,
-      bbox,
-      created_at
-    `)
-    .eq('user_id', user?.id)
-    .gte('created_at', todayStartISO) 
-    .order('created_at', { ascending: false })
+      .from('detections')
+      .select(`
+        upload_id,
+        object_type,
+        bbox,
+        created_at
+      `)
+      .eq('user_id', user?.id)
+      .gte('created_at', todayStartUTC) 
+      .order('created_at', { ascending: false })
 
     if (error) {
       console.error('❌ Failed to load detection history:', error.message);
@@ -96,12 +101,15 @@ export default function CameraPage() {
     // upload_id ごとにまとめて、bboxの合計数をカウント
     const grouped = data.reduce((acc, row) => {
       const id = row.upload_id;
-      const createdAt = new Date(row.created_at);
-  
+
+      const createdAt = DateTime.fromISO(row.created_at, { zone: 'utc' })
+        .setZone(localTz)
+        .toFormat('yyyy-MM-dd HH:mm:ss')
+    
       if (!acc[id]) {
         acc[id] = {
           id,
-          timestamp: createdAt.toLocaleString(),
+          timestamp: createdAt,
           totalCount: 0,
           typeCounts: {} as Record<string, number>
         };
@@ -212,7 +220,7 @@ export default function CameraPage() {
 
   const captureImageDebug = useCallback(async () => {
     // ★ ローカルファイルを直接fetch！
-    const testImageUrl = '/ref_sample2.jpg';
+    const testImageUrl = '/mango.jpg';
   
     const response = await fetch(testImageUrl);
     const blob = await response.blob();
@@ -288,26 +296,63 @@ export default function CameraPage() {
   }, [startCamera]);
 
   const saveResults = useCallback(async () => {
-    if (detectionBoxes.length === 0) {
+    if (!capturedImage || detectionBoxes.length === 0) {
       toast.error(t('noDetectionResult'));
       return;
     }
 
     try {
-      const typeCounts = detectionBoxes.reduce((acc, box) => {
-        acc[box.type] = (acc[box.type] || 0) + 1;
-        return acc;
-      }, {} as Record<string, number>);
+      const { data: uploadData, error: uploadError } = await supabase
+        .from('uploads')
+        .select('id')
+        .order('uploaded_at', { ascending: false, nullsFirst: false })
+        .eq('user_id', user?.id)
+        .limit(1)
+        .single();
 
-      // Create new history entry
-      const newEntry: DetectionHistory = {
-        id: Date.now().toString(),
-        timestamp: new Date().toLocaleString('en-US'),
-        totalCount,
-        typeCounts,
-      };
+      if (uploadError || !uploadData) {
+        throw new Error('Failed to fetch upload_id');
+      }
+      const uploadId = uploadData.id;
+
+      const { data: inventoryData, error: inventoryError } = await supabase
+        .from('inventory')
+        .insert([{
+          upload_id: uploadId,
+          user_id: user?.id,
+          company_id: user?.company,
+          confirmed_at: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+      if (inventoryError || !inventoryData) {
+        throw new Error('Failed to create inventory record');
+      }
+      const inventoryId = inventoryData.id;
+
+      const { data: detections, error: detError } = await supabase
+        .from('detections')
+        .select('id, bbox')
+        .eq('upload_id', uploadId);
+
+      if (detError || !detections) {
+        throw new Error('Failed to get detection IDs');
+      }
+
+      const detectionInsert = detections.map((det) => ({
+        inventory_id: inventoryId,
+        detection_id: det.id,
+        quantity: det.bbox.length  // 必要に応じて調整可能
+      }));
+
+      const { error: invDetError } = await supabase
+        .from('inventory_detections')
+        .insert(detectionInsert);
       
-      setDetectionHistory(prev => [newEntry, ...prev]);
+      if (invDetError) {
+        throw new Error('Failed to insert inventory_detections');
+      }
       toast.success(t('saveSuccess'));
       
       // Reset for next detection
@@ -319,7 +364,7 @@ export default function CameraPage() {
       toast.error(t('saveError'));
       console.error('Save error:', error);
     }
-  }, [detectionBoxes, totalCount, capturedImage, startCamera]);
+  }, [capturedImage, detectionBoxes, user?.id, user?.company, startCamera, t]);
 
   const formatTime = (timestamp: string) => {
     return new Date(timestamp).toLocaleTimeString('en-US', {

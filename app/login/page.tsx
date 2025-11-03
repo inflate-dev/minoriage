@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { Loader2, Wheat } from 'lucide-react';
@@ -65,28 +65,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleSignUp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-
-    try {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-      });
-
-      if (error) throw error;
-
-      toast.success(t('toastCreate'));
-      setUser(data.user);
-      router.push('/dashboard');
-    } catch (error: any) {
-      toast.error(error.message || t('toastFail'));
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
   <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
     <header className="bg-white shadow-sm border-b px-4 py-2 flex justify-end">
@@ -109,10 +87,6 @@ export default function LoginPage() {
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="login" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="login">{t('tabLogin')}</TabsTrigger>
-              <TabsTrigger value="signup">{t('tabSignup')}</TabsTrigger>
-            </TabsList>
             
             <TabsContent value="login">
               <form onSubmit={handleLogin} className="space-y-4">
@@ -148,45 +122,17 @@ export default function LoginPage() {
                     t('loginBtn')
                   )}
                 </Button>
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="signup">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="signup-email">{t('email')}</Label>
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    placeholder={t('enterEmail')}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="signup-password">{t('password')}</Label>
-                  <Input
-                    id="signup-password"
-                    type="password"
-                    placeholder={t('enterPassword')}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                  />
-                </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {t('signupLoading')}
-                    </>
-                  ) : (
-                    t('signupBtn')
-                  )}
+                
+                <Button
+                  variant="outline"
+                  className="w-full mt-4"
+                  onClick={() => router.push('/signup')}
+                >
+                  {t('registerUser')}
                 </Button>
               </form>
             </TabsContent>
+
           </Tabs>
         </CardContent>
       </Card>

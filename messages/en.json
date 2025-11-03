@@ -21,11 +21,11 @@
   },
   "signup": {
     "title": "Sign Up",
-    "name": "Name",
+    "name": "Name *",
     "companyName": "Company Name",
-    "email": "Email",
-    "password": "Password",
-    "confirmPassword": "Confirm Password",
+    "email": "Email *",
+    "password": "Password *",
+    "confirmPassword": "Confirm Password *",
     "signupBtn": "Sign Up",
     "signupLoading": "Signing up...",
     "haveAccount": "Already have an account? Sign In",
@@ -33,7 +33,8 @@
     "toastSignupFail": "Signup failed. Please try again.",
     "toastCreate": "Account created successfully",
     "placeholderEmail": "your@email.com",
-    "enterPassword": "Enter your password"
+    "enterPassword": "Enter your password",
+    "enterConfirmPassword": "Enter Confirm password"
   },
   "camera": {
     "title": "Counting System",
@@ -81,7 +82,7 @@
       "detectedToday": "Items Detected Today",
       "totalItems": "Total Detected Items",
       "salesEfficiency": "Sales Efficiency",
-      "vsYesterday": "+12% vs yesterday",
+      "vsYesterday": "vs yesterday",
       "currentStock": "Current Stock",
       "vsLastWeek": "+5% vs last week"
     },
