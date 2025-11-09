@@ -78,7 +78,7 @@
       "totalItems": "検出済みアイテム総数",
       "salesEfficiency": "販売効率",
       "vsYesterday": "% 昨日比 ",
-      "currentStock": "現在の在庫",
+      "currentStock": "現在+在庫",
       "vsLastWeek": "+5% 先週比"
     },
     "headerTitle": "ダッシュボード",

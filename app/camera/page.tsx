@@ -215,7 +215,10 @@ export default function CameraPage() {
     const result = await sendToLocalServer(imageData);
     
     // Auto-detect after capture
-    if (result) await detectItem(result, imageData);
+    if (result) {
+      await detectItem(result, imageData);
+      await loadHistory();
+    }
   }, [setCurrentImage]);
 
   const captureImageDebug = useCallback(async () => {
