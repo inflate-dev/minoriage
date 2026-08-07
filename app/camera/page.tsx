@@ -41,7 +41,7 @@ interface DetectionHistory {
 export default function CameraPage() {
   const t = useTranslations('camera')
   const user = useAppStore(state => state.user);
-  const { detectionMode } = useAppStore();
+  const { detectionMode, _hydrated } = useAppStore();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [isStreaming, setIsStreaming] = useState(false);
@@ -60,13 +60,15 @@ export default function CameraPage() {
   // Auto-start camera when component mounts
   useEffect(() => {
     startCamera();
-    loadHistory();
+    if (_hydrated && user?.id) {
+      loadHistory();
+    }
     
     // Cleanup camera on unmount
     return () => {
       stopCamera();
     };
-  }, []);
+  }, [_hydrated, user?.id]);
 
   // Load today's detection history from Supabase
   const loadHistory = async  () => {
