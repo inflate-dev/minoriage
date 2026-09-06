@@ -2,142 +2,76 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useTranslations } from 'next-intl'
+import { useRouter } from 'next/navigation';
 import { useAppStore } from '@/lib/store';
 import { Button } from '@/components/ui/button';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
 import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { toast } from 'sonner';
-import { DateTime } from 'luxon';
-import { Camera, RotateCcw, Save, Loader2, Clock } from 'lucide-react';
+import { Circle, Square, Loader2, History } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { uploadScanVideo, createScanRecord, UploadHandle } from '@/lib/scan';
 
+type RecordingState = 'idle' | 'recording' | 'preview' | 'uploading';
 
-const SERVER_URL = process.env.NEXT_PUBLIC_LOCAL_SERVER_URL; // local server api
-const DEBUG_MODE = false;
+const RECORDING_MIME_CANDIDATES = [
+  'video/mp4',
+  'video/webm;codecs=vp9',
+  'video/webm;codecs=vp8',
+  'video/webm',
+];
 
-interface DetectionBox {
-  type: string;
-  confidence: number;
-  bbox: {
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  };
+function pickSupportedMimeType(): string | undefined {
+  if (typeof MediaRecorder === 'undefined' || !MediaRecorder.isTypeSupported) {
+    return undefined;
+  }
+  return RECORDING_MIME_CANDIDATES.find((type) => MediaRecorder.isTypeSupported(type));
 }
 
-interface TotalDetction {
-  type: string;
-  count: number;
-}
-
-interface DetectionHistory {
-  id: string;
-  timestamp: string;
-  totalCount: number;
-  typeCounts: { [type: string]: number }; 
+function formatElapsed(seconds: number): string {
+  const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+  const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+  return `${m}:${s}`;
 }
 
 export default function CameraPage() {
   const t = useTranslations('camera')
-  const user = useAppStore(state => state.user);
-  const { detectionMode, _hydrated } = useAppStore();
+  const router = useRouter();
+  const { user, setUser } = useAppStore();
   const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const recordedChunksRef = useRef<Blob[]>([]);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const uploadHandleRef = useRef<UploadHandle | null>(null);
+
   const [isStreaming, setIsStreaming] = useState(false);
-  const [capturedImage, setCapturedImage] = useState<string | null>(null);
-  const [detectionBoxes, setDetectionBoxes] = useState<DetectionBox[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [detectionHistory, setDetectionHistory] = useState<DetectionHistory[]>([]);
-  
-  const { 
-    isDetecting, 
-    setIsDetecting, 
-    setDetectionResults, 
-    setCurrentImage 
-  } = useAppStore();
+  const [recordingState, setRecordingState] = useState<RecordingState>('idle');
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [recordedBlob, setRecordedBlob] = useState<Blob | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
-  // Auto-start camera when component mounts
   useEffect(() => {
-    startCamera();
-    if (_hydrated && user?.id) {
-      loadHistory();
-    }
-    
-    // Cleanup camera on unmount
-    return () => {
-      stopCamera();
-    };
-  }, [_hydrated, user?.id]);
-
-  // Load today's detection history from Supabase
-  const loadHistory = async  () => {
-    // 今日の00:00:00をISO文字列で作成（UTC対応）
-  const localTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-  const todayStartUTC = DateTime.now()
-    .setZone(localTz)
-    .startOf('day')
-    .toUTC()
-    .toISO();
-
-    const { data, error } = await supabase
-      .from('detections')
-      .select(`
-        upload_id,
-        object_type,
-        bbox,
-        created_at
-      `)
-      .eq('user_id', user?.id)
-      .gte('created_at', todayStartUTC) 
-      .order('created_at', { ascending: false })
-
-    if (error) {
-      console.error('❌ Failed to load detection history:', error.message);
-      return;
-    }
-
-    if (!data) return;
-
-    // upload_id ごとにまとめて、bboxの合計数をカウント
-    const grouped = data.reduce((acc, row) => {
-      const id = row.upload_id;
-
-      const createdAt = DateTime.fromISO(row.created_at, { zone: 'utc' })
-        .setZone(localTz)
-        .toFormat('yyyy-MM-dd HH:mm:ss')
-    
-      if (!acc[id]) {
-        acc[id] = {
-          id,
-          timestamp: createdAt,
-          totalCount: 0,
-          typeCounts: {} as Record<string, number>
-        };
+    const getUser = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session) {
+        setUser(session.user);
       }
-  
-      const count = Array.isArray(row.bbox) ? row.bbox.length : 0;
-      acc[id].totalCount += count;
-  
-      const label = row.object_type || 'unknown';
-      acc[id].typeCounts[label] = (acc[id].typeCounts[label] || 0) + count;
-  
-      return acc;
-    }, {} as Record<string, DetectionHistory>);
-
-    const history = Object.values(grouped);
-    setDetectionHistory(history);
-  };
+    };
+    getUser();
+  }, [setUser]);
 
   const startCamera = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { 
+        video: {
           facingMode: 'environment',
-        }
+          width: { ideal: 1920 },
+          height: { ideal: 1080 },
+        },
+        audio: false,
       });
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         setIsStreaming(true);
@@ -146,243 +80,113 @@ export default function CameraPage() {
       toast.error(t('startCameraError'));
       console.error('Camera error:', error);
     }
-  }, []);
+  }, [t]);
 
   const stopCamera = useCallback(() => {
-    if (videoRef.current?.srcObject) {
-      const stream = videoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach(track => track.stop());
-      setIsStreaming(false);
-    }
+    const stream = videoRef.current?.srcObject as MediaStream | null;
+    stream?.getTracks().forEach((track) => track.stop());
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setIsStreaming(false);
   }, []);
 
-  const sendToLocalServer = async (imageDataUrl: string) => {
-    const blob = await (await fetch(imageDataUrl)).blob();
-    const formData = new FormData();
-    formData.append('image', blob, 'captured.jpg');
-    formData.append('company', user?.company || 'e407c2d2-19e1-4e4e-b973-f349772edf0a');
-    formData.append('user', user?.id || '279af390-d2b0-4222-bb78-cc680ac5a9a8');
-    formData.append('mode', detectionMode || 'api');
-  
-    try {
-      const res = await fetch(`${SERVER_URL}/upload`, {
-        method: 'POST',
-        body: formData
-      });
-  
-      const result = await res.json();
-      console.log('📬 Response from local server:', result);
-      return result;
-    } catch (err) {
-      console.error('❌ Failed to send image to local server:', err);
-      return null;
-    }
-  };
-
-  const captureImageNormal = useCallback(async () => {
-    if (!videoRef.current || !canvasRef.current) return;
-
-    const canvas = canvasRef.current;
-    const video = videoRef.current;
-    const context = canvas.getContext('2d');
-
-    if (!context) return;
-
-    const videoWidth = video.videoWidth;
-    const videoHeight = video.videoHeight;
-    
-    // 正方形クロップサイズと開始位置を計算（中心から）
-    const squareSize = Math.min(videoWidth, videoHeight);
-    const startX = (videoWidth - squareSize) / 2;
-    const startY = (videoHeight - squareSize) / 2;
-
-    const exportSize = 600; // ← 送る画像のサイズ
-
-    // canvasサイズは送信用に600x600に！
-    canvas.width = exportSize;
-    canvas.height = exportSize;
-
-    // クロップした範囲をcanvasに描画
-    context.drawImage(
-      video,
-      startX, startY, squareSize, squareSize, // クロップ元
-      0, 0, exportSize, exportSize            // 描画先
-    );
-  
-    const imageData = canvas.toDataURL('image/jpeg', 0.9);
-    setCapturedImage(imageData);
-    setCurrentImage(imageData);
-
-    // send to local
-    const result = await sendToLocalServer(imageData);
-    
-    // Auto-detect after capture
-    if (result) {
-      await detectItem(result, imageData);
-      await loadHistory();
-    }
-  }, [setCurrentImage]);
-
-  const captureImageDebug = useCallback(async () => {
-    // ★ ローカルファイルを直接fetch！
-    const testImageUrl = '/mango.jpg';
-  
-    const response = await fetch(testImageUrl);
-    const blob = await response.blob();
-  
-    // blobからdataURLに変換（UIにも表示するなら）
-    const reader = new FileReader();
-    reader.onloadend = async () => {
-      const imageData = reader.result as string;
-  
-      setCapturedImage(imageData);
-      setCurrentImage(imageData);
-  
-      // send to local
-      const result = await sendToLocalServer(imageData);
-      if (result) await detectItem(result, imageData);
-    };
-    reader.readAsDataURL(blob);
-  }, [setCurrentImage]);
-
-  const captureImage = useCallback(() => {
-    setIsDetecting(true);
-    if (DEBUG_MODE) {
-      captureImageDebug();
-    } else {
-      captureImageNormal();
-    }
-  }, [DEBUG_MODE, captureImageDebug, captureImageNormal]);
-
-  const detectItem = useCallback(async (result:any, imageData?: string) => {
-    const targetImage = imageData || capturedImage;
-    if (!targetImage || !result.items) return;
-
-    
-    try {
-      const detectionBoxes: DetectionBox[] = result.items.map((item: any) => ({
-        type: item.label || 'Unknown',
-        confidence: 1.0, // 信頼度が無ければ仮で100%
-        bbox: {
-          x: (item.box[0] + item.box[2]) / 2 * (2 / 3), // 600x600から400x400に変換
-          y: (item.box[1] + item.box[3]) / 2 * (2 / 3),
-          width: (item.box[2] - item.box[0]) * (2 / 3),
-          height: (item.box[3] - item.box[1]) * (2 / 3)
-        }
-      }));
-      // Simulate API call to object detection service
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock detection results based on the reference image
-      setDetectionBoxes(detectionBoxes);
-      setTotalCount(detectionBoxes.length);
-      setDetectionResults(detectionBoxes.map((det, idx) => ({
-        id: `det-${idx}`,
-        type: det.type,
-        quantity: 1,
-        confidence: det.confidence,
-        bbox: det.bbox
-      })));
-      
-      toast.success(t('detectSuccess'));
-    } catch (error) {
-      toast.error(t('detectFail'));
-      console.error('Detection error:', error);
-    } finally {
-      setIsDetecting(false);
-    }
-  }, [capturedImage, setIsDetecting, setDetectionResults]);
-
-  const retryCapture = useCallback(() => {
-    setCapturedImage(null);
-    setDetectionBoxes([]);
-    setTotalCount(0);
+  useEffect(() => {
     startCamera();
-  }, [startCamera]);
+    return () => {
+      stopCamera();
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  const saveResults = useCallback(async () => {
-    if (!capturedImage || detectionBoxes.length === 0) {
-      toast.error(t('noDetectionResult'));
+  useEffect(() => {
+    return () => {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+    };
+  }, [previewUrl]);
+
+  const startUpload = useCallback(async () => {
+    if (!recordedBlob) return;
+    if (!user) {
+      toast.error(t('loginRequired'));
       return;
     }
 
+    setRecordingState('uploading');
+    setUploadProgress(0);
+
+    const handle = uploadScanVideo(recordedBlob, user.id, user.company, setUploadProgress);
+    uploadHandleRef.current = handle;
+
     try {
-      const { data: uploadData, error: uploadError } = await supabase
-        .from('uploads')
-        .select('id')
-        .order('uploaded_at', { ascending: false, nullsFirst: false })
-        .eq('user_id', user?.id)
-        .limit(1)
-        .single();
-
-      if (uploadError || !uploadData) {
-        throw new Error('Failed to fetch upload_id');
-      }
-      const uploadId = uploadData.id;
-
-      const { data: inventoryData, error: inventoryError } = await supabase
-        .from('inventory')
-        .insert([{
-          upload_id: uploadId,
-          user_id: user?.id,
-          company_id: user?.company,
-          confirmed_at: new Date().toISOString()
-        }])
-        .select()
-        .single();
-
-      if (inventoryError || !inventoryData) {
-        throw new Error('Failed to create inventory record');
-      }
-      const inventoryId = inventoryData.id;
-
-      const { data: detections, error: detError } = await supabase
-        .from('detections')
-        .select('id, bbox')
-        .eq('upload_id', uploadId);
-
-      if (detError || !detections) {
-        throw new Error('Failed to get detection IDs');
-      }
-
-      const detectionInsert = detections.map((det) => ({
-        inventory_id: inventoryId,
-        detection_id: det.id,
-        quantity: det.bbox.length  // 必要に応じて調整可能
-      }));
-
-      const { error: invDetError } = await supabase
-        .from('inventory_detections')
-        .insert(detectionInsert);
-      
-      if (invDetError) {
-        throw new Error('Failed to insert inventory_detections');
-      }
-      toast.success(t('saveSuccess'));
-      
-      // Reset for next detection
-      setCapturedImage(null);
-      setDetectionBoxes([]);
-      setTotalCount(0);
-      startCamera();
+      const { jetsonScanId } = await handle.promise;
+      const scan = await createScanRecord(user.id, user.company, jetsonScanId);
+      toast.success(t('uploadSuccess'));
+      router.push(`/space?scan=${scan.id}`);
     } catch (error) {
-      toast.error(t('saveError'));
-      console.error('Save error:', error);
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        toast(t('uploadCancelled'));
+      } else {
+        console.error('Scan upload error:', error);
+        toast.error(t('uploadFail'));
+      }
+      // 電波不良などで失敗しても撮影済みの動画は失わず、確認画面から再送信できるようにする
+      setRecordingState('preview');
+    } finally {
+      uploadHandleRef.current = null;
     }
-  }, [capturedImage, detectionBoxes, user?.id, user?.company, startCamera, t]);
+  }, [recordedBlob, user, t, router]);
 
-  const formatTime = (timestamp: string) => {
-    return new Date(timestamp).toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
+  const cancelUpload = useCallback(() => {
+    uploadHandleRef.current?.abort();
+  }, []);
 
-  const countsByType = detectionBoxes.reduce((acc, box) => {
-    const type = box.type;
-    acc[type] = (acc[type] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  const handleRetake = useCallback(() => {
+    setRecordedBlob(null);
+    setPreviewUrl(null);
+    recordedChunksRef.current = [];
+    setRecordingState('idle');
+    startCamera();
+  }, [startCamera]);
+
+  const startRecording = useCallback(() => {
+    const stream = videoRef.current?.srcObject as MediaStream | null;
+    if (!stream) return;
+
+    const mimeType = pickSupportedMimeType();
+    const mediaRecorder = mimeType
+      ? new MediaRecorder(stream, { mimeType })
+      : new MediaRecorder(stream);
+
+    recordedChunksRef.current = [];
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) recordedChunksRef.current.push(event.data);
+    };
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunksRef.current, {
+        type: mimeType || 'video/webm',
+      });
+      setRecordedBlob(blob);
+      setPreviewUrl(URL.createObjectURL(blob));
+      setRecordingState('preview');
+      stopCamera();
+    };
+
+    mediaRecorder.start();
+    mediaRecorderRef.current = mediaRecorder;
+    setRecordingState('recording');
+    setElapsedSeconds(0);
+    timerRef.current = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+  }, [stopCamera]);
+
+  const stopRecording = useCallback(() => {
+    mediaRecorderRef.current?.stop();
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-900 text-white pb-20 flex flex-col">
@@ -400,156 +204,115 @@ export default function CameraPage() {
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col overflow-hidden">
-        {/* Camera Section - Mobile Portrait Optimized */}
-        <div className="relative bg-black mx-auto w-full max-w-[400px] p-2 rounded-md" style={{ aspectRatio: '1/1'}}>
-          <div className="absolute inset-0 flex items-center justify-center">
-            {capturedImage ? (
-              <div className="relative w-full h-full">
-                <img
-                  src={capturedImage}
-                  alt="Captured"
-                  className="w-full h-full object-cover"
-                />
-                {/* Detection Boxes */}
-                {detectionMode === 'ai' && detectionBoxes.map((box, index) => (
-                  <div
-                    key={index}
-                    className="absolute w-3 h-3 rounded-full bg-red-500"
-                    style={{
-                      left: `${(box.bbox.x / 400 ) * 100}%`,
-                      top: `${(box.bbox.y /400 ) * 100}%`,
-                      transform: 'translate(-50%, -50%)',
-                    }}
-                  >
-                    <div className="bg-red-500 text-white text-xs px-1 py-0.5 absolute -top-5 left-0 whitespace-nowrap text-[10px]">
-                      {box.type}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                muted
-                className="w-full h-full object-cover"
-              />
-            )}
-            
-            {/* Detection Status Overlay */}
-            {isDetecting && (
-              <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                <div className="bg-gray-800 p-4 rounded-lg flex items-center space-x-3">
-                  <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
-                  <span className="text-white font-medium text-sm">{t('detecting')}</span>
-                </div>
-              </div>
-            )}
-          </div>
-          
-          <canvas ref={canvasRef} className="hidden" />
+        {/* Camera Section */}
+        <div className="relative bg-black flex-1 w-full overflow-hidden">
+          {recordingState === 'preview' || recordingState === 'uploading' ? (
+            <video
+              key="preview"
+              src={previewUrl ?? undefined}
+              controls={recordingState === 'preview'}
+              playsInline
+              className="absolute inset-0 w-full h-full object-contain"
+            />
+          ) : (
+            <video
+              key="live"
+              ref={videoRef}
+              autoPlay
+              playsInline
+              muted
+              className="absolute inset-0 w-full h-full object-contain"
+            />
+          )}
+
+          {recordingState === 'recording' && (
+            <div className="absolute top-3 left-3 flex items-center gap-2 bg-black/60 rounded-full px-3 py-1">
+              <Circle className="w-3 h-3 text-red-500 fill-red-500 animate-pulse" />
+              <span className="text-sm font-mono">{formatElapsed(elapsedSeconds)}</span>
+            </div>
+          )}
         </div>
 
-        {/* Results Display */}
-        {totalCount > 0 && (
-          <div className="w-full flex justify-center mt-4">
-            <div className="bg-gray-700 text-white rounded-lg shadow-md p-4 w-full max-w-sm">
-              <div className="text-xl font-bold text-blue-400 mb-2 text-center">
-                {t('total')}: {totalCount}
-              </div>
-              <div className="text-sm text-gray-300 text-center">
-                {Object.entries(countsByType).map(([type, count]) => (
-                  <div key={type} className="flex justify-center gap-6 px-2 text-base">
-                    <span>{t('type')}: {type}</span>
-                    <span>{t('qty')}: {count}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-        {totalCount == 0 && (
-          <div className="p-3 text-center text-gray-400 text-sm">
-            {t('noDetections')}
-          </div>
-        )}
+        <p className="text-center text-gray-400 text-xs py-2 px-4 flex-shrink-0">
+          {recordingState === 'preview' || recordingState === 'uploading' ? t('previewHint') : t('recordHint')}
+        </p>
 
-        {/* Controls - Always at Bottom */}
-        <div className="p-3  flex-shrink-0">
-          <div className="flex justify-center space-x-3">
+        {/* Controls */}
+        <div className="p-3 flex-shrink-0">
+          {recordingState === 'preview' ? (
+            <div className="flex justify-center space-x-3">
+              <Button
+                variant="outline"
+                onClick={handleRetake}
+                className="border-gray-600 text-gray-300 hover:bg-gray-700 px-6"
+              >
+                {t('retake')}
+              </Button>
+              <Button
+                onClick={startUpload}
+                className="bg-blue-600 hover:bg-blue-700 px-6"
+              >
+                {t('send')}
+              </Button>
+            </div>
+          ) : (
+            <div className="flex justify-center space-x-3">
+              {recordingState !== 'recording' ? (
+                <Button
+                  onClick={startRecording}
+                  className="bg-red-600 hover:bg-red-700 px-6"
+                  disabled={!isStreaming || recordingState === 'uploading' || !user}
+                >
+                  <Circle className="w-4 h-4 mr-2 fill-current" />
+                  {t('startRecording')}
+                </Button>
+              ) : (
+                <Button
+                  onClick={stopRecording}
+                  className="bg-gray-600 hover:bg-gray-700 px-6"
+                >
+                  <Square className="w-4 h-4 mr-2 fill-current" />
+                  {t('stopRecording')}
+                </Button>
+              )}
+            </div>
+          )}
+
+          <div className="flex justify-center mt-4">
             <Button
-              onClick={captureImage}
-              size="sm"
-              className="bg-blue-600 hover:bg-blue-700 px-4"
-              disabled={!isStreaming || isDetecting}
-            >
-              <Camera className="w-4 h-4 mr-1" />
-              {t('capture')}
-            </Button>
-            
-            <Button
-              onClick={retryCapture}
-              size="sm"
               variant="outline"
-              className="border-gray-600 text-gray-300 hover:bg-gray-700 px-4"
-              disabled={isDetecting}
+              className="border-gray-600 text-gray-300 hover:bg-gray-700"
+              onClick={() => router.push('/space')}
             >
-              <RotateCcw className="w-4 h-4 mr-1" />
-              {t('retry')}
-            </Button>
-            
-            <Button
-              onClick={saveResults}
-              size="sm"
-              className="bg-green-600 hover:bg-green-700 px-4"
-              disabled={detectionBoxes.length === 0 || isDetecting}
-            >
-              <Save className="w-4 h-4 mr-1" />
-              {t('record')}
+              <History className="w-4 h-4 mr-2" />
+              {t('viewHistory')}
             </Button>
           </div>
         </div>
-
-        {/* History Section - Scrollable */}
-        <div className="w-full flex justify-center mt-6">
-          <div className="w-full max-w-md">
-            {/* Header */}
-            <div className="flex items-center text-gray-400 text-sm border-b border-gray-700 pb-2 mb-2">
-              <Clock className="w-4 h-4 mr-2 text-gray-400" />
-              <h3 className="text-base font-medium text-white"> {t('historyTitle')} </h3>
-            </div>
-          
-            {/* Empty state */}
-            {detectionHistory.length === 0 ? (
-              <p className="text-gray-500 text-sm text-center">{t('noHistory')}</p>
-            ) : (
-              <div className="space-y-3">
-                {detectionHistory.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="bg-gray-700 rounded-md p-3 text-sm text-gray-200 shadow-sm"
-                  >
-                    <div className="font-semibold text-blue-400">
-                      {formatTime(entry.timestamp)}
-                    </div>
-                    <div>{t('total')}: {entry.totalCount}</div>
-                    {Object.entries(entry.typeCounts).map(([type, count]) => (
-                      <div key={type} className="flex justify-between text-sm">
-                        <span>{t('type')}: {type}</span>
-                        <span>{t('qty')}: {count}</span>
-                      </div>
-                    ))}
-                  </div>
-                ))}
-              </div>
-            )}
-            </div>
-          </div>
-
       </main>
 
       <BottomNavigation />
+
+      {recordingState === 'uploading' && (
+        <div className="fixed inset-0 z-[100] bg-black/80 flex flex-col items-center justify-center gap-4 px-6">
+          <Loader2 className="w-6 h-6 animate-spin text-blue-400" />
+          <span className="text-white font-medium text-sm">{t('uploading')}</span>
+          <div className="w-full max-w-xs bg-gray-700 rounded-full h-2 overflow-hidden">
+            <div
+              className="bg-blue-500 h-2 rounded-full transition-all duration-150"
+              style={{ width: `${Math.round(uploadProgress * 100)}%` }}
+            />
+          </div>
+          <span className="text-xs text-gray-300">{Math.round(uploadProgress * 100)}%</span>
+          <Button
+            variant="outline"
+            className="border-gray-500 text-gray-200 hover:bg-gray-800 mt-2"
+            onClick={cancelUpload}
+          >
+            {t('cancelUpload')}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

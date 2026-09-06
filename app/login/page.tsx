@@ -64,19 +64,19 @@ export default function LoginPage() {
   };
 
   return (
-  <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex flex-col">
+  <div className="min-h-screen bg-neutral-50 flex flex-col">
     <header className="bg-white shadow-sm border-b px-4 py-2 flex justify-end">
       <LanguageSwitcher />
     </header>
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-neutral-50 flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-4">
-            <div className="p-3 bg-blue-600 rounded-full">
+            <div className="p-3 bg-blue-950 rounded-full">
               <Wheat className="w-8 h-8 text-white" />
             </div>
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900">
+          <CardTitle className="text-2xl font-bold text-neutral-900">
             {t('title')}
           </CardTitle>
           <CardDescription>

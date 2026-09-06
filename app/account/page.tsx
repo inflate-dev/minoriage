@@ -78,12 +78,12 @@ export default function AccountPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pb-20">
+    <div className="min-h-screen bg-neutral-50 pb-20">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
-            <div className="p-2 bg-blue-600 rounded-lg mr-3">
+            <div className="p-2 bg-blue-950 rounded-lg mr-3">
               <User className="w-6 h-6 text-white" />
             </div>
             <h1 className="text-xl font-bold text-gray-900">{t('title')}</h1>
@@ -102,7 +102,7 @@ export default function AccountPage() {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
-                  <User className="w-5 h-5 mr-2 text-blue-600" />
+                  <User className="w-5 h-5 mr-2 text-neutral-400" />
                   <CardTitle>{t('profile.title')}</CardTitle>
                 </div>
                 <Button
@@ -191,7 +191,7 @@ export default function AccountPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center">
-                <Shield className="w-5 h-5 mr-2 text-red-600" />
+                <Shield className="w-5 h-5 mr-2 text-neutral-400" />
                 <CardTitle>{t('security.title')}</CardTitle>
               </div>
               <CardDescription>
@@ -214,7 +214,7 @@ export default function AccountPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center">
-                <Mail className="w-5 h-5 mr-2 text-green-600" />
+                <Mail className="w-5 h-5 mr-2 text-neutral-400" />
                 <div>
                   <CardTitle>{t('subscription.title')}</CardTitle>
                   <CardDescription>{t('subscription.description')}</CardDescription>

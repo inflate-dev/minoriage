@@ -1,14 +1,19 @@
 'use client';
 
 import { usePathname, useRouter } from 'next/navigation';
-import { Camera, BarChart3, Settings, User } from 'lucide-react';
+import { Camera, Box, BarChart3, Settings, User } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navigationItems = [
   {
-    name: 'Item Detection',
+    name: 'Record',
     href: '/camera',
     icon: Camera,
+  },
+  {
+    name: '3D Space',
+    href: '/space',
+    icon: Box,
   },
   {
     name: 'Dashboard',
@@ -33,7 +38,7 @@ export function BottomNavigation() {
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-700 z-50">
-      <div className="grid grid-cols-4 h-16">
+      <div className="grid grid-cols-5 h-16">
         {navigationItems.map((item) => {
           const isActive = pathname === item.href;
           const Icon = item.icon;

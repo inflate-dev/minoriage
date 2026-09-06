@@ -240,16 +240,16 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pb-20">
+    <div className="min-h-screen bg-neutral-50 pb-20">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white border-b border-neutral-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <div className="p-2 bg-blue-600 rounded-lg mr-3">
+              <div className="p-2 bg-blue-950 rounded-lg mr-3">
                 <BarChartIcon className="w-6 h-6 text-white" />
               </div>
-              <h1 className="text-xl font-bold text-gray-900">{t('headerTitle')}</h1>
+              <h1 className="text-xl font-bold text-neutral-900">{t('headerTitle')}</h1>
             </div>
             <LanguageSwitcher/>
           </div>
@@ -260,15 +260,15 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8 flex justify-between items-start">
           <div>
-            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+            <h2 className="text-3xl font-bold text-neutral-900 mb-2">
               {t('title')}
             </h2>
-            <p className="text-gray-600">
+            <p className="text-neutral-500">
               {t('description')}
             </p>
           </div>
             <Button
-              className="bg-green-100 text-black border border-green-500 hover:bg-green-200 mt-2"
+              className="bg-blue-950 text-white hover:bg-blue-900 mt-2"
               onClick={handleExportCSV}
             >
               {t('export')}
@@ -283,7 +283,7 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent className="flex-grow">
               <table className="w-full text-left border-separate border-spacing-y-2">
-                <thead className="text-gray-600 border-b">
+                <thead className="text-neutral-500 border-b border-neutral-200">
                   <tr>
                     <th>{t('inventoryItem')}</th>
                     <th className="text-center">{t('inventoryCount')}</th>
@@ -294,19 +294,19 @@ export default function DashboardPage() {
                   {todayRecord ? (
                     Object.entries(todayRecord.items).map(([item, count]) => {
                       return (
-                        <tr key={item} className="bg-gray-50 hover:bg-gray-100 rounded">
+                        <tr key={item} className="bg-neutral-50 hover:bg-neutral-100 rounded">
                           <td className="px-2 py-2 font-medium">{item}</td>
                           <td className="text-center">{count}</td>
-                          <td className="text-center text-red-500 font-semibold">$---</td>
+                          <td className="text-center text-neutral-400 font-semibold">$---</td>
                         </tr>
                       )
-                    })  
+                    })
                   ) : (
                     <tr>
-                      <td colSpan={3} className="text-center py-4 text-gray-500"> {t('noData')}</td>
+                      <td colSpan={3} className="text-center py-4 text-neutral-400"> {t('noData')}</td>
                     </tr>
                   )}
-                </tbody>  
+                </tbody>
               </table>
             </CardContent>
           </Card>
@@ -335,12 +335,12 @@ export default function DashboardPage() {
         {/* 範囲選択 UI */}
         <div className="mb-6 flex flex-wrap items-center gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('rangeLabel')}</label>
+            <label className="block text-sm font-medium text-neutral-600 mb-1">{t('rangeLabel')}</label>
             <select
               value={range}
               onChange={e => setRange(e.target.value as any)}
-              className="block w-32 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm
-             focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="block w-32 px-3 py-2 border border-neutral-300 rounded-md shadow-sm text-sm
+             focus:outline-none focus:ring-2 focus:ring-blue-900"
             >
               <option value="day">{t('rangeDay')}</option>
               <option value="week">{t('rangeWeek')}</option>
@@ -351,19 +351,19 @@ export default function DashboardPage() {
 
           {/* 日付入力 */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">{t('dateLabel')}</label>
+            <label className="block text-sm font-medium text-neutral-600 mb-1">{t('dateLabel')}</label>
             <input
               type="date"
               value={date}
               onChange={e => setDate(e.target.value)}
-              className="block w-44 px-3 py-2 border border-gray-300 rounded-md shadow-sm text-sm
-             focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="block w-44 px-3 py-2 border border-neutral-300 rounded-md shadow-sm text-sm
+             focus:outline-none focus:ring-2 focus:ring-blue-900"
             />
           </div>
         </div>
 
         {/* グラフ */}
-        <div className="h-60 border p-4 rounded">
+        <div className="h-60 border border-neutral-200 p-4 rounded">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chartData}>
               <XAxis dataKey={
@@ -374,7 +374,7 @@ export default function DashboardPage() {
               <YAxis />
               <Tooltip />
               <Legend />
-              <Bar dataKey="total" fill="#200096ff" name="Total Count" />
+              <Bar dataKey="total" fill="#1e3a8a" name="Total Count" />
               {/* 個別 object_type の Bar を追加したければこんな感じ：
               {keys.map(key => (
                 <Bar key={key} dataKey={key} name={key} />

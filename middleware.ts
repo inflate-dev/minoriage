@@ -12,7 +12,7 @@ export async function middleware(req: NextRequest) {
   const url = req.nextUrl.clone();
 
   // Protected routes
-  const protectedRoutes = ['/dashboard', '/camera', '/analytics'];
+  const protectedRoutes = ['/dashboard', '/camera', '/space', '/analytics'];
   const isProtectedRoute = protectedRoutes.some(route => 
     req.nextUrl.pathname.startsWith(route)
   );

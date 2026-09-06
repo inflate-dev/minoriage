@@ -1,1 +1,1 @@
-pashtte
+minoriage

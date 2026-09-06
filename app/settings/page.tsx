@@ -152,12 +152,12 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 pb-20">
+    <div className="min-h-screen bg-neutral-50 pb-20">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center h-16">
-            <div className="p-2 bg-blue-600 rounded-lg mr-3">
+            <div className="p-2 bg-blue-950 rounded-lg mr-3">
               <Settings className="w-6 h-6 text-white" />
             </div>
             <h1 className="text-xl font-bold text-gray-900">{t('title')}</h1>
@@ -175,7 +175,7 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center">
-                <Camera className="w-5 h-5 mr-2 text-blue-600" />
+                <Camera className="w-5 h-5 mr-2 text-neutral-400" />
                 <CardTitle>{t('detection.title')}</CardTitle>
               </div>
               <CardDescription>
@@ -202,7 +202,7 @@ export default function SettingsPage() {
                     value="ai"
                     checked={detectionMode === 'ai'}
                     onChange={() => setDetectionMode('ai')}
-                    className="mt-1 form-radio text-blue-700"
+                    className="mt-1 form-radio text-blue-950"
                   />
                   <label htmlFor="ai" className="text-lg font-medium">{t('detection.aiMode')}</label>
                 </div>
@@ -215,7 +215,7 @@ export default function SettingsPage() {
                     value="api"
                     checked={detectionMode === 'api'}
                     onChange={() => setDetectionMode('api')}
-                    className="mt-1 form-radio text-blue-700"
+                    className="mt-1 form-radio text-blue-950"
                   />
                   <label htmlFor="api" className="text-lg font-medium">{t('detection.apiMode')}</label>
                 </div>
@@ -229,7 +229,7 @@ export default function SettingsPage() {
                     value="ref"
                     checked={detectionMode === 'ref'}
                     onChange={() => setDetectionMode('ref')}
-                    className="mt-1 form-radio text-blue-700"
+                    className="mt-1 form-radio text-blue-950"
                   />
                   <label htmlFor="sample" className="text-lg font-medium">{t('detection.refMode')}</label>
                 </div>
@@ -312,7 +312,7 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center">
-                <Database className="w-5 h-5 mr-2 text-green-600" />
+                <Database className="w-5 h-5 mr-2 text-neutral-400" />
                 <CardTitle>{t('data.title')}</CardTitle>
               </div>
               <CardDescription>
@@ -339,7 +339,7 @@ export default function SettingsPage() {
           <Card>
             <CardHeader>
               <div className="flex items-center">
-                <Smartphone className="w-5 h-5 mr-2 text-purple-600" />
+                <Smartphone className="w-5 h-5 mr-2 text-neutral-400" />
                 <CardTitle>{t('system.title')}</CardTitle>
               </div>
               <CardDescription>

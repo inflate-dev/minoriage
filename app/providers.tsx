@@ -80,7 +80,7 @@ export function Providers({ children }: Props) {
   if (!locale || !allMessages[locale]) return null
 
   return (
-    <IntlProvider locale={locale} messages={allMessages[locale]}>
+    <IntlProvider locale={locale} messages={allMessages[locale]} timeZone="Asia/Tokyo">
       {children}
     </IntlProvider>
   )
