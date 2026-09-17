@@ -15,11 +15,6 @@ import { Box, Loader2, AlertTriangle, ChevronLeft, Camera } from 'lucide-react';
 import {
   ScanRow,
   ScanObject,
-  fetchScanStatus,
-  fetchScanResult,
-  insertScanObjects,
-  markScanDone,
-  markScanFailed,
   listScans,
   getScan,
   getScanObjects,
@@ -158,7 +153,6 @@ function ScanDetail({ scanId, onBack }: { scanId: string; onBack: () => void }) 
   const [scan, setScan] = useState<ScanRow | null>(null);
   const [objects, setObjects] = useState<ScanObject[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stage, setStage] = useState<string | null>(null);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // 初回ロード
@@ -193,39 +187,27 @@ function ScanDetail({ scanId, onBack }: { scanId: string; onBack: () => void }) 
     };
   }, [scanId, t]);
 
-  // ポーリング（doc/spec.md 9章：処理完了までstatusを定期確認する）
+  // ポーリング（Jetson側がSfM完了時にSupabaseへ直接status/結果を書き込むため、
+  // フロントはJetsonに直接問い合わせず、Supabaseのscans行を定期確認するだけでよい）
   useEffect(() => {
     if (!scan) return;
     if (scan.status !== 'uploading' && scan.status !== 'processing') return;
-    if (!scan.jetson_scan_id) return;
 
     let cancelled = false;
-    const jetsonScanId = scan.jetson_scan_id;
 
     const poll = async () => {
       try {
-        const statusRes = await fetchScanStatus(jetsonScanId);
+        const updated = await getScan(scan.id);
         if (cancelled) return;
 
-        if (statusRes.status === 'done') {
-          const result = await fetchScanResult(jetsonScanId);
-          await insertScanObjects(scan.id, result.objects);
-          await markScanDone(scan.id, result.pointcloud_url, result.camera_trajectory);
+        if (updated.status === 'done' || updated.status === 'failed') {
+          const objs = updated.status === 'done' ? await getScanObjects(scan.id) : [];
           if (cancelled) return;
-          const [updated, objs] = await Promise.all([getScan(scan.id), getScanObjects(scan.id)]);
           setScan(updated);
           setObjects(objs);
           return;
         }
 
-        if (statusRes.status === 'failed') {
-          await markScanFailed(scan.id, statusRes.error || 'Unknown error');
-          if (cancelled) return;
-          setScan(await getScan(scan.id));
-          return;
-        }
-
-        setStage(statusRes.stage ?? null);
         timeoutRef.current = setTimeout(poll, POLL_INTERVAL_MS);
       } catch (err) {
         console.error('Scan status polling failed:', err);
@@ -266,7 +248,7 @@ function ScanDetail({ scanId, onBack }: { scanId: string; onBack: () => void }) 
           <CardContent className="py-16 flex flex-col items-center text-center">
             <Loader2 className="w-8 h-8 animate-spin text-blue-950 mb-4" />
             <p className="text-gray-700 font-medium">{t('processingTitle')}</p>
-            {stage && <p className="text-sm text-gray-500 mt-1">{stage}</p>}
+            {scan.stage && <p className="text-sm text-gray-500 mt-1">{scan.stage}</p>}
             <p className="text-sm text-gray-500 mt-2">{t('processingHint')}</p>
           </CardContent>
         </Card>
@@ -293,6 +275,7 @@ function ScanDetail({ scanId, onBack }: { scanId: string; onBack: () => void }) 
                   pointcloudUrl={scan.pointcloud_url}
                   objects={objects}
                   cameraTrajectory={scan.camera_trajectory || []}
+                  fallbackPointcloudUrl={scanId === DEBUG_SCAN_ID ? '/sample-scan/pointcloud.ply' : undefined}
                 />
               </div>
             </CardContent>

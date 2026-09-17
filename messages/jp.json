@@ -84,6 +84,7 @@
       "trajectoryToggle": "カメラ軌跡",
       "singleViewToggle": "単一視点の対象物",
       "pointSize": "点の大きさ",
+      "flipButton": "上下反転",
       "hints": "drag：回転 / scroll：ズーム / shift+drag：平行移動。対象物にカーソルを合わせると詳細表示、クリックでフォーカス。",
       "legendPoints": "密点群（MVS）",
       "legendTrajectory": "カメラ軌跡",

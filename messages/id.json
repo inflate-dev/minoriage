@@ -84,6 +84,7 @@
       "trajectoryToggle": "Jalur kamera",
       "singleViewToggle": "Barang sudut tunggal",
       "pointSize": "Ukuran titik",
+      "flipButton": "Balik atas-bawah",
       "hints": "drag: putar / scroll: zoom / shift+drag: geser. Arahkan kursor ke barang untuk detail, klik untuk fokus.",
       "legendPoints": "Titik awan padat (MVS)",
       "legendTrajectory": "Jalur kamera",

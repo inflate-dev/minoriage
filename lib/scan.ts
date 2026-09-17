@@ -17,6 +17,7 @@ export interface ScanRow {
   company_id: string;
   jetson_scan_id: string | null;
   status: ScanStatus;
+  stage: string | null;
   error_message: string | null;
   pointcloud_url: string | null;
   camera_trajectory: Vec3[] | null;
@@ -34,27 +35,7 @@ export interface ScanObject {
   viewCount: number;
 }
 
-interface ScanStatusResponse {
-  status: ScanStatus;
-  stage?: string;
-  error?: string;
-}
-
-interface ScanResultResponse {
-  scan_id: string;
-  pointcloud_url: string;
-  camera_trajectory: Vec3[];
-  objects: {
-    id: string;
-    label: string;
-    position: Vec3;
-    confidence: number;
-    view_count: number;
-  }[];
-  summary: Record<string, number>;
-}
-
-function jetsonHeaders(): HeadersInit {
+export function jetsonHeaders(): HeadersInit {
   return JETSON_API_KEY ? { Authorization: `Bearer ${JETSON_API_KEY}` } : {};
 }
 
@@ -124,30 +105,6 @@ export function uploadScanVideo(
   return { promise, abort: () => xhr.abort() };
 }
 
-export async function fetchScanStatus(jetsonScanId: string): Promise<ScanStatusResponse> {
-  const res = await fetch(`${SERVER_URL}/scan/status/${jetsonScanId}`, {
-    headers: jetsonHeaders(),
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch scan status (status ${res.status})`);
-  }
-
-  return res.json();
-}
-
-export async function fetchScanResult(jetsonScanId: string): Promise<ScanResultResponse> {
-  const res = await fetch(`${SERVER_URL}/scan/result/${jetsonScanId}`, {
-    headers: jetsonHeaders(),
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch scan result (status ${res.status})`);
-  }
-
-  return res.json();
-}
-
 export async function createScanRecord(
   userId: string,
   companyId: string,
@@ -171,57 +128,6 @@ export async function createScanRecord(
   }
 
   return data as ScanRow;
-}
-
-export async function markScanDone(
-  scanId: string,
-  pointcloudUrl: string,
-  cameraTrajectory: Vec3[]
-): Promise<void> {
-  const { error } = await supabase
-    .from('scans')
-    .update({
-      status: 'done',
-      pointcloud_url: pointcloudUrl,
-      camera_trajectory: cameraTrajectory,
-      completed_at: new Date().toISOString(),
-    })
-    .eq('id', scanId);
-
-  if (error) throw new Error(error.message);
-}
-
-export async function markScanFailed(scanId: string, errorMessage: string): Promise<void> {
-  const { error } = await supabase
-    .from('scans')
-    .update({
-      status: 'failed',
-      error_message: errorMessage,
-      completed_at: new Date().toISOString(),
-    })
-    .eq('id', scanId);
-
-  if (error) throw new Error(error.message);
-}
-
-export async function insertScanObjects(
-  scanId: string,
-  objects: ScanResultResponse['objects']
-): Promise<void> {
-  if (objects.length === 0) return;
-
-  const rows = objects.map((obj) => ({
-    scan_id: scanId,
-    label: obj.label,
-    position_x: obj.position.x,
-    position_y: obj.position.y,
-    position_z: obj.position.z,
-    confidence: obj.confidence,
-    view_count: obj.view_count,
-  }));
-
-  const { error } = await supabase.from('scan_objects').insert(rows);
-  if (error) throw new Error(error.message);
 }
 
 export async function listScans(userId: string): Promise<ScanRow[]> {

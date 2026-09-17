@@ -5,12 +5,14 @@ import { useTranslations } from 'next-intl';
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { PLYLoader } from 'three/examples/jsm/loaders/PLYLoader.js';
-import type { ScanObject, Vec3 } from '@/lib/scan';
+import { jetsonHeaders, type ScanObject, type Vec3 } from '@/lib/scan';
 
 interface Props {
   pointcloudUrl: string;
   objects: ScanObject[];
   cameraTrajectory: Vec3[];
+  // Jetsonへの取得に失敗した場合に代わりに読み込む点群（デバッグ表示専用。本番のスキャンでは渡さない）
+  fallbackPointcloudUrl?: string;
 }
 
 const MULTI_VIEW_COLOR = 0x22c55e; // green-500: 複数視点で確認
@@ -28,12 +30,15 @@ interface SceneRefs {
   controls: OrbitControls;
   markers: Marker[];
   trajectoryLine: THREE.Line | null;
+  points: THREE.Points | null;
   pointsMaterial: THREE.PointsMaterial | null;
   basePointSize: number;
   focusTarget: { position: THREE.Vector3; target: THREE.Vector3 } | null;
+  // 上下反転ボタンの回転軸（点群のバウンディングボックス中心）。点群読み込み前はnull
+  flipCenter: THREE.Vector3 | null;
 }
 
-export function ScanViewer({ pointcloudUrl, objects, cameraTrajectory }: Props) {
+export function ScanViewer({ pointcloudUrl, objects, cameraTrajectory, fallbackPointcloudUrl }: Props) {
   const t = useTranslations('space.viewer');
   const containerRef = useRef<HTMLDivElement>(null);
   const refs = useRef<SceneRefs | null>(null);
@@ -44,9 +49,40 @@ export function ScanViewer({ pointcloudUrl, objects, cameraTrajectory }: Props) 
   const [pointCount, setPointCount] = useState<number | null>(null);
   const [hovered, setHovered] = useState<ScanObject | null>(null);
   const [hoverPos, setHoverPos] = useState<{ x: number; y: number } | null>(null);
+  const [flipped, setFlipped] = useState(false);
 
   const multiViewCount = objects.filter((o) => o.viewCount >= 2).length;
   const singleViewCount = objects.length - multiViewCount;
+
+  // 点群・マーカー・カメラ軌跡を、点群のバウンディングボックス中心を軸にX軸周りへ180度回転する。
+  // 同じ操作を2回行うと元に戻る（180度回転は自身が逆変換になるため）
+  const handleFlip = () => {
+    const r = refs.current;
+    if (!r || !r.flipCenter) return;
+    const center = r.flipCenter;
+    const axis = new THREE.Vector3(1, 0, 0);
+
+    if (r.points) {
+      const g = r.points.geometry;
+      g.translate(-center.x, -center.y, -center.z);
+      g.rotateX(Math.PI);
+      g.translate(center.x, center.y, center.z);
+      g.computeVertexNormals();
+    }
+
+    if (r.trajectoryLine) {
+      const g = r.trajectoryLine.geometry;
+      g.translate(-center.x, -center.y, -center.z);
+      g.rotateX(Math.PI);
+      g.translate(center.x, center.y, center.z);
+    }
+
+    for (const marker of r.markers) {
+      marker.mesh.position.sub(center).applyAxisAngle(axis, Math.PI).add(center);
+    }
+
+    setFlipped((f) => !f);
+  };
 
   // シーン構築（データが変わったときだけ作り直す）
   useEffect(() => {
@@ -109,15 +145,21 @@ export function ScanViewer({ pointcloudUrl, objects, cameraTrajectory }: Props) 
       controls,
       markers,
       trajectoryLine,
+      points: null,
       pointsMaterial: null,
       basePointSize: 0.01,
       focusTarget: null,
+      flipCenter: null,
     };
 
+    // PLYLoader.load()は生URLを直接fetchするためAuthorizationヘッダーを付けられない。
+    // Jetson側の点群配信はAPIキー認証必須のため、自前でfetchしてからparse()に渡す
+    let cancelled = false;
     const loader = new PLYLoader();
-    loader.load(
-      pointcloudUrl,
-      (geometry) => {
+
+    const renderPointcloud = (buffer: ArrayBuffer) => {
+        if (cancelled) return;
+        const geometry = loader.parse(buffer);
         geometry.computeBoundingBox();
         geometry.computeVertexNormals();
 
@@ -149,8 +191,10 @@ export function ScanViewer({ pointcloudUrl, objects, cameraTrajectory }: Props) 
         }
 
         if (refs.current) {
+          refs.current.points = points;
           refs.current.pointsMaterial = material;
           refs.current.basePointSize = basePointSize;
+          refs.current.flipCenter = center.clone();
         }
         setPointCount(geometry.attributes.position.count);
 
@@ -160,10 +204,26 @@ export function ScanViewer({ pointcloudUrl, objects, cameraTrajectory }: Props) 
         camera.far = size * 100;
         camera.updateProjectionMatrix();
         controls.update();
-      },
-      undefined,
-      (error) => console.error('Failed to load point cloud:', error)
-    );
+    };
+
+    const fetchPointcloud = (url: string, headers?: HeadersInit) =>
+      fetch(url, headers ? { headers } : undefined).then((res) => {
+        if (!res.ok) throw new Error(`Failed to fetch point cloud (status ${res.status})`);
+        return res.arrayBuffer();
+      });
+
+    fetchPointcloud(pointcloudUrl, jetsonHeaders())
+      .then(renderPointcloud)
+      .catch((error) => {
+        if (!fallbackPointcloudUrl) {
+          console.error('Failed to load point cloud:', error);
+          return;
+        }
+        console.warn('Failed to load point cloud from Jetson, falling back to sample data:', error);
+        fetchPointcloud(fallbackPointcloudUrl)
+          .then(renderPointcloud)
+          .catch((fallbackError) => console.error('Failed to load fallback point cloud:', fallbackError));
+      });
 
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
@@ -235,6 +295,7 @@ export function ScanViewer({ pointcloudUrl, objects, cameraTrajectory }: Props) 
     window.addEventListener('resize', handleResize);
 
     return () => {
+      cancelled = true;
       cancelAnimationFrame(frameId);
       window.removeEventListener('resize', handleResize);
       renderer.domElement.removeEventListener('pointermove', handlePointerMove);
@@ -245,7 +306,7 @@ export function ScanViewer({ pointcloudUrl, objects, cameraTrajectory }: Props) 
       refs.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pointcloudUrl, objects, cameraTrajectory]);
+  }, [pointcloudUrl, objects, cameraTrajectory, fallbackPointcloudUrl]);
 
   // トグル・スライダーの反映（シーンを作り直さず既存オブジェクトを更新するだけ）
   useEffect(() => {
@@ -333,6 +394,13 @@ export function ScanViewer({ pointcloudUrl, objects, cameraTrajectory }: Props) 
             className="w-full"
           />
         </div>
+        <button
+          type="button"
+          onClick={handleFlip}
+          className="w-full text-xs bg-white/10 hover:bg-white/20 rounded px-2 py-1.5 transition-colors"
+        >
+          {t('flipButton')}
+        </button>
         <p className="text-[10px] text-gray-400 leading-relaxed pt-1 border-t border-gray-700">
           {t('hints')}
         </p>

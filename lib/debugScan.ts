@@ -1,7 +1,10 @@
 import { ScanObject, ScanRow, Vec3 } from './scan';
 
-// UIの見た目確認用。Supabase/Jetsonを通さず public/sample-scan/pointcloud.ply を直接表示する。
+// UIの見た目確認用。Supabaseは通さず、Jetsonのデバッグ専用エンドポイント
+// （/debug/sample-pointcloud、要APIキー認証）から実際のSfM出力サンプルを取得する。
 export const DEBUG_SCAN_ID = 'debug';
+
+const SERVER_URL = process.env.NEXT_PUBLIC_LOCAL_SERVER_URL;
 
 function buildDebugTrajectory(): Vec3[] {
   const points: Vec3[] = [];
@@ -25,8 +28,9 @@ export const DEBUG_SCAN: ScanRow = {
   company_id: 'debug-company',
   jetson_scan_id: null,
   status: 'done',
+  stage: null,
   error_message: null,
-  pointcloud_url: '/sample-scan/pointcloud.ply',
+  pointcloud_url: `${SERVER_URL}/debug/sample-pointcloud`,
   camera_trajectory: buildDebugTrajectory(),
   video_url: null,
   created_at: new Date().toISOString(),

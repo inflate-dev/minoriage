@@ -84,6 +84,7 @@
       "trajectoryToggle": "Camera trajectory",
       "singleViewToggle": "Single-view items",
       "pointSize": "Point size",
+      "flipButton": "Flip upside down",
       "hints": "drag: rotate / scroll: zoom / shift+drag: pan. Hover an item for details, click to focus.",
       "legendPoints": "Dense point cloud (MVS)",
       "legendTrajectory": "Camera trajectory",
