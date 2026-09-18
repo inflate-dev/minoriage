@@ -10,6 +10,7 @@ import { LanguageSwitcher } from '@/components/LanguageSwitcher'
 import { toast } from 'sonner';
 import { Circle, Square, Loader2, History } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
+import { buildAppUser } from '@/lib/auth';
 import { uploadScanVideo, createScanRecord, UploadHandle } from '@/lib/scan';
 
 type RecordingState = 'idle' | 'recording' | 'preview' | 'uploading';
@@ -55,7 +56,8 @@ export default function CameraPage() {
     const getUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (session) {
-        setUser(session.user);
+        const appUser = await buildAppUser(session);
+        if (appUser) setUser(appUser);
       }
     };
     getUser();

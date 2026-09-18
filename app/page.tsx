@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
+import { buildAppUser } from '@/lib/auth';
 
 export default function Home() {
   const router = useRouter();
@@ -12,9 +13,10 @@ export default function Home() {
   useEffect(() => {
     const checkUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      
+
       if (session) {
-        setUser(session.user);
+        const appUser = await buildAppUser(session);
+        if (appUser) setUser(appUser);
         router.push('/dashboard');
       } else {
         router.push('/login');

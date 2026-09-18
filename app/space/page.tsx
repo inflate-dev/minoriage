@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 import { useAppStore } from '@/lib/store';
+import { buildAppUser } from '@/lib/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BottomNavigation } from '@/components/ui/bottom-navigation';
@@ -45,7 +46,10 @@ function SpacePageContent() {
   useEffect(() => {
     const getSessionUser = async () => {
       const { data: { session } } = await supabase.auth.getSession();
-      if (session) setUser(session.user);
+      if (session) {
+        const appUser = await buildAppUser(session);
+        if (appUser) setUser(appUser);
+      }
     };
     getSessionUser();
   }, [setUser]);
