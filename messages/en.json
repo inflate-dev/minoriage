@@ -66,7 +66,7 @@
       "failed": "Failed"
     },
     "processingTitle": "Processing your scan...",
-    "processingHint": "This can take up to about 5 minutes",
+    "processingHint": "This can take up to about 30 minutes",
     "errorTitle": "Scan failed",
     "objectsTitle": "Detected Items",
     "objectLabel": "Item",
@@ -94,40 +94,55 @@
     }
   },
   "dashboard": {
-    "title": "Inventory Dashboard",
-    "description": "View detailed reports including inventory status, sales trends, and efficiency based on the detection data.",
-    "export": "Export CSV",
+    "headerTitle": "Dashboard",
+    "title": "Persimmon Dashboard",
+    "description": "Track this season's detection status based on days since bloom.",
+    "error": "Error occurred",
+    "loading": "Loading...",
 
-    "inventorySummaryTitle": "Today's Inventory Summary",
-    "inventoryItem": "Item",
-    "inventoryCount": "Count",
-    "inventorySold": "Sold",
-    "noData": "No data for selected date",
-
-    "salesTotal": "Total Sales",
-    "salesMonth": "Sales This Month",
-
-    "rangeLabel": "Range",
-    "dateLabel": "Date",
-    "rangeDay": "Day",
-    "rangeWeek": "Week",
-    "rangeMonth": "Month",
-    "rangeYear": "Year",
-
-    "chartTotal": "Total Count",
-
-    "quickStats": {
-      "detectedToday": "Items Detected Today",
-      "totalItems": "Total Detected Items",
-      "salesEfficiency": "Sales Efficiency",
-      "vsYesterday": "vs yesterday",
-      "currentStock": "Current Stock",
-      "vsLastWeek": "+5% vs last week"
+    "summary": {
+      "totalDetected": "Detected This Season",
+      "totalDetectedUnit": "",
+      "seasonLabel": "Day {days} since bloom",
+      "yoyChange": "Vs. Same Period Last Year",
+      "yoyChangeHint": "Compared by growth phase (days since bloom)",
+      "coloringPace": "Coloring Pace",
+      "coloringPaceAhead": "{days} days ahead of last year",
+      "coloringPaceBehind": "{days} days behind last year",
+      "coloringPaceSame": "About the same as last year",
+      "alertCount": "Alerts to Review",
+      "alertCountUnit": ""
     },
 
-    "headerTitle": "Dashboard",
-    "error": "Error occurred",
-    "loading": "Loading..."
+    "trend": {
+      "title": "Detection Trend (Year-over-Year)",
+      "xAxisLabel": "Days Since Bloom",
+      "yAxisLabel": "Detected Count",
+      "thisYear": "This Year",
+      "lastYear": "Last Year",
+      "detected": "Detected",
+      "colored": "Colored",
+      "phases": {
+        "bloom": "Bloom",
+        "fruitSet": "Fruit Set",
+        "enlargement": "Enlargement",
+        "coloring": "Coloring",
+        "harvest": "Harvest"
+      }
+    },
+
+    "actions": {
+      "title": "Next Actions",
+      "empty": "No alerts need attention right now",
+      "detail": "View Details",
+      "harvestRecommend": "{area} - {ratio}% colored, harvest recommended",
+      "anomaly": "{area} - {percent}% vs last year, needs review",
+      "etaPrediction": "{area} - Estimated {days} days until optimal harvest",
+      "detailDialogTitle": "{area} Details",
+      "detailDetected": "Detected (this season)",
+      "detailYoy": "Vs. same period last year",
+      "detailColoredRatio": "Colored ratio"
+    }
   },
   "settings": {
     "title": "Settings",

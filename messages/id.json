@@ -66,7 +66,7 @@
       "failed": "Gagal"
     },
     "processingTitle": "Memproses hasil pindai Anda...",
-    "processingHint": "Proses ini bisa memakan waktu hingga sekitar 5 menit",
+    "processingHint": "Proses ini bisa memakan waktu hingga sekitar 30 menit",
     "errorTitle": "Pindai gagal",
     "objectsTitle": "Barang Terdeteksi",
     "objectLabel": "Barang",
@@ -95,40 +95,55 @@
   },
 
   "dashboard": {
-    "title": "Dasbor Inventaris",
-    "description": "Lihat laporan detail termasuk status inventaris, tren penjualan, dan efisiensi berdasarkan data deteksi.",
-    "export": "Ekspor CSV",
+    "headerTitle": "Dasbor",
+    "title": "Dasbor Kesemek",
+    "description": "Pantau status deteksi musim ini berdasarkan jumlah hari sejak berbunga.",
+    "error": "Terjadi kesalahan",
+    "loading": "Memuat...",
 
-    "inventorySummaryTitle": "Ringkasan Inventaris Hari Ini",
-    "inventoryItem": "Barang",
-    "inventoryCount": "Jumlah",
-    "inventorySold": "Terjual",
-    "noData": "Tidak ada data untuk tanggal yang dipilih",
-
-    "salesTotal": "Total Penjualan",
-    "salesMonth": "Penjualan Bulan Ini",
-
-    "rangeLabel": "Rentang",
-    "dateLabel": "Tanggal",
-    "rangeDay": "Harian",
-    "rangeWeek": "Mingguan",
-    "rangeMonth": "Bulanan",
-    "rangeYear": "Tahunan",
-
-    "chartTotal": "Jumlah Total",
-
-    "quickStats": {
-      "detectedToday": "Barang Terdeteksi Hari Ini",
-      "totalItems": "Total Barang Terdeteksi",
-      "salesEfficiency": "Efisiensi Penjualan",
-      "vsYesterday": "dibanding kemarin",
-      "currentStock": "Stok Saat Ini",
-      "vsLastWeek": "+5% dibanding minggu lalu"
+    "summary": {
+      "totalDetected": "Terdeteksi Musim Ini",
+      "totalDetectedUnit": "",
+      "seasonLabel": "Hari ke-{days} sejak berbunga",
+      "yoyChange": "Vs. Periode Sama Tahun Lalu",
+      "yoyChangeHint": "Dibandingkan berdasarkan fase pertumbuhan (hari sejak berbunga)",
+      "coloringPace": "Kecepatan Pewarnaan Buah",
+      "coloringPaceAhead": "{days} hari lebih cepat dari tahun lalu",
+      "coloringPaceBehind": "{days} hari lebih lambat dari tahun lalu",
+      "coloringPaceSame": "Kira-kira sama dengan tahun lalu",
+      "alertCount": "Peringatan Perlu Ditinjau",
+      "alertCountUnit": ""
     },
 
-    "headerTitle": "Dasbor",
-    "error": "Terjadi kesalahan",
-    "loading": "Memuat..."
+    "trend": {
+      "title": "Tren Deteksi (Tahun-ke-Tahun)",
+      "xAxisLabel": "Hari Sejak Berbunga",
+      "yAxisLabel": "Jumlah Terdeteksi",
+      "thisYear": "Tahun Ini",
+      "lastYear": "Tahun Lalu",
+      "detected": "Terdeteksi",
+      "colored": "Berwarna",
+      "phases": {
+        "bloom": "Berbunga",
+        "fruitSet": "Pembentukan Buah",
+        "enlargement": "Pembesaran",
+        "coloring": "Pewarnaan",
+        "harvest": "Panen"
+      }
+    },
+
+    "actions": {
+      "title": "Tindakan Berikutnya",
+      "empty": "Saat ini tidak ada peringatan yang perlu ditinjau",
+      "detail": "Lihat Detail",
+      "harvestRecommend": "{area} - {ratio}% buah berwarna, panen direkomendasikan",
+      "anomaly": "{area} - {percent}% vs tahun lalu, perlu ditinjau",
+      "etaPrediction": "{area} - Diperkirakan {days} hari lagi menuju waktu panen optimal",
+      "detailDialogTitle": "Detail {area}",
+      "detailDetected": "Terdeteksi (musim ini)",
+      "detailYoy": "Vs. periode sama tahun lalu",
+      "detailColoredRatio": "Rasio buah berwarna"
+    }
   },
 
   "settings": {

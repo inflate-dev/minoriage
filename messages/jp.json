@@ -66,7 +66,7 @@
       "failed": "失敗"
     },
     "processingTitle": "スキャンを処理しています...",
-    "processingHint": "完了まで5分程度かかる場合があります",
+    "processingHint": "完了まで30分程度かかる場合があります",
     "errorTitle": "スキャンに失敗しました",
     "objectsTitle": "検出された対象物",
     "objectLabel": "品目",
@@ -94,34 +94,52 @@
     }
   },
   "dashboard": {
-    "title": "在庫ダッシュボード",
-    "description": "検出データを基に、在庫状況・売上傾向・効率のレポートを表示します。",
-    "export": "CSVエクスポート",
-    "inventorySummaryTitle": "本日の在庫サマリー",
-    "inventoryItem": "アイテム",
-    "inventoryCount": "在庫数",
-    "inventorySold": "販売数",
-    "noData": "選択された日のデータはありません",
-    "salesTotal": "総売上",
-    "salesMonth": "今月の売上",
-    "rangeLabel": "範囲",
-    "dateLabel": "日付",
-    "rangeDay": "日",
-    "rangeWeek": "週",
-    "rangeMonth": "月",
-    "rangeYear": "年",
-    "chartTotal": "合計数",
-    "quickStats": {
-      "detectedToday": "今日検出されたアイテム",
-      "totalItems": "検出済みアイテム総数",
-      "salesEfficiency": "販売効率",
-      "vsYesterday": "% 昨日比 ",
-      "currentStock": "現在+在庫",
-      "vsLastWeek": "+5% 先週比"
-    },
     "headerTitle": "ダッシュボード",
+    "title": "柿ダッシュボード",
+    "description": "開花からの経過日数を基準に、今シーズンの検出状況を確認できます。",
     "error": "エラーが発生しました",
-    "loading": "読み込み中…"
+    "loading": "読み込み中…",
+    "summary": {
+      "totalDetected": "今シーズン検出数",
+      "totalDetectedUnit": "個",
+      "seasonLabel": "開花から{days}日目",
+      "yoyChange": "前年同時期比",
+      "yoyChangeHint": "生育フェーズ基準(開花からの経過日数)で比較",
+      "coloringPace": "着色果の増加ペース",
+      "coloringPaceAhead": "昨年より{days}日早い",
+      "coloringPaceBehind": "昨年より{days}日遅い",
+      "coloringPaceSame": "昨年と同程度",
+      "alertCount": "要確認アラート",
+      "alertCountUnit": "件"
+    },
+    "trend": {
+      "title": "検出数の推移(前年比較)",
+      "xAxisLabel": "開花からの経過日数(日)",
+      "yAxisLabel": "検出数",
+      "thisYear": "今年",
+      "lastYear": "昨年",
+      "detected": "検出数",
+      "colored": "着色果数",
+      "phases": {
+        "bloom": "開花",
+        "fruitSet": "着果",
+        "enlargement": "肥大",
+        "coloring": "着色",
+        "harvest": "収穫期"
+      }
+    },
+    "actions": {
+      "title": "次のアクション",
+      "empty": "現在、対応が必要なアラートはありません",
+      "detail": "詳細を見る",
+      "harvestRecommend": "{area} - 着色果割合{ratio}%、収穫を推奨",
+      "anomaly": "{area} - 前年同時期比{percent}%、要確認",
+      "etaPrediction": "{area} - 収穫適期まで残り{days}日と推定",
+      "detailDialogTitle": "{area}の詳細",
+      "detailDetected": "検出数(今シーズン)",
+      "detailYoy": "前年同時期比",
+      "detailColoredRatio": "着色果割合"
+    }
   },
   "settings": {
     "title": "設定",
