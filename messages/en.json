@@ -54,7 +54,7 @@
     "viewHistory": "View Scan History"
   },
   "space": {
-    "title": "3D Space View",
+    "title": "3D Viewer",
     "historyTitle": "Scan History",
     "noHistory": "No scans yet",
     "newScanBtn": "New Scan",

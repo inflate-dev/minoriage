@@ -11,7 +11,7 @@ const navigationItems = [
     icon: Camera,
   },
   {
-    name: '3D Space',
+    name: '3D Viewer',
     href: '/space',
     icon: Box,
   },

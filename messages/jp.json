@@ -54,7 +54,7 @@
     "viewHistory": "スキャン履歴を見る"
   },
   "space": {
-    "title": "3D空間ビュー",
+    "title": "3D Viewer",
     "historyTitle": "スキャン履歴",
     "noHistory": "まだスキャンがありません",
     "newScanBtn": "新規スキャン",
