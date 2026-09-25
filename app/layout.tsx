@@ -27,6 +27,8 @@ export default async function RootLayout({
           {children}
           <Toaster richColors />
         </Providers>
+        {/* TEMP: Figma capture script — remove after export */}
+        <script src="https://mcp.figma.com/mcp/html-to-design/capture.js" async></script>
       </body>
     </html>
   );

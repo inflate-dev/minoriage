@@ -76,30 +76,35 @@
     "viewer": {
       "badge": "SFM + YOLO FUSION",
       "pointCount": "Points",
-      "cameraCount": "Camera Views",
-      "detectedTotal": "Detected Items",
-      "multiView": "Confirmed (multi-view)",
-      "singleView": "Single-view only",
-      "settingsTitle": "Display Settings",
-      "trajectoryToggle": "Camera trajectory",
-      "singleViewToggle": "Single-view items",
+      "itemsLabel": "Items",
+      "layersTitle": "LAYERS",
+      "layerDensePointCloud": "Dense point cloud",
+      "layerDensePointCloudSub": "MVS",
+      "layerCameraTrajectory": "Camera trajectory",
+      "layerConfirmed": "Confirmed",
+      "layerConfirmedSub": "2+ views",
+      "layerSingleView": "Single-view only",
+      "layerSingleViewSub": "1 view",
+      "displayTitle": "DISPLAY",
       "pointSize": "Point size",
+      "floorGrid": "Floor grid",
+      "viewFit": "Fit",
+      "viewTop": "Top",
+      "viewFront": "Front",
+      "viewSide": "Side",
+      "flipLabel": "Flip",
       "flipButton": "Flip upside down",
       "hints": "drag: rotate / scroll: zoom / shift+drag: pan. Hover an item for details, click to focus.",
-      "legendPoints": "Dense point cloud (MVS)",
-      "legendTrajectory": "Camera trajectory",
-      "legendMultiView": "Item (2+ views)",
-      "legendSingleView": "Item (1 view only)",
+      "togglePanel": "Toggle {panel}",
       "tooltipViewCount": "seen from {count} view(s)"
     }
   },
   "dashboard": {
     "headerTitle": "Dashboard",
-    "title": "Persimmon Dashboard",
+    "title": "Dashboard",
     "description": "Track this season's detection status based on days since bloom.",
     "error": "Error occurred",
     "loading": "Loading...",
-
     "summary": {
       "totalDetected": "Detected This Season",
       "totalDetectedUnit": "",
@@ -113,7 +118,12 @@
       "alertCount": "Alerts to Review",
       "alertCountUnit": ""
     },
-
+    "areas": {
+      "field1": "Orchard 1",
+      "field2": "Orchard 2",
+      "field3": "Orchard 3",
+      "field4": "Orchard 4"
+    },
     "trend": {
       "title": "Detection Trend (Year-over-Year)",
       "xAxisLabel": "Days Since Bloom",
@@ -130,7 +140,6 @@
         "harvest": "Harvest"
       }
     },
-
     "actions": {
       "title": "Next Actions",
       "empty": "No alerts need attention right now",
@@ -149,31 +158,19 @@
     "detection": {
       "title": "Detection Settings",
       "description": "Configure item detection functionality",
-      "modeLabel": "Item Detection Mode",
-      "modeHint": "Select a method for detecting and counting items from the captured image.",
-      "aiMode": "AI Mode",
-      "apiMode": "chatGPT Mode",
-      "refMode": "Reference Mode",
       "highAccuracy": "High Accuracy Mode",
       "highAccuracyHint": "Capture in high resolution for more accurate results",
       "threshold": "Threshold",
       "thresholdHint": "Confidence threshold for detections (0.1–1.0)",
       "maxDetections": "Max Detections",
-      "maxDetectionsHint": "Maximum number of item types to process per detection",
-      "uploadSuccess": "Sample image uploaded!",
-      "uploadFail": "Failed to upload image",
-      "uploadWarning": "No image URL returned",
-      "uploadLimit": "Image size exceeds 5MB limit",
-      "uploadType": "Only JPG image files are allowed"
+      "maxDetectionsHint": "Maximum number of item types to process per detection"
     },
-
     "data": {
       "title": "Data Settings",
       "description": "Manage data saving and sync options",
       "autoSave": "Auto Save",
       "autoSaveHint": "Automatically save detection results to database"
     },
-
     "system": {
       "title": "System Info",
       "description": "App and device status",
@@ -183,13 +180,11 @@
       "lastSync": "Last Sync",
       "storage": "Storage Usage"
     },
-
     "saveBtn": "Save Settings",
     "saveSuccess": "Settings saved successfully"
   },
   "account": {
     "title": "Account Settings",
-
     "profile": {
       "title": "Personal Info",
       "edit": "Edit",
@@ -199,14 +194,12 @@
       "email": "Email",
       "joined": "Joined"
     },
-
     "security": {
       "title": "Security Settings",
       "description": "Manage your password and two-factor authentication",
       "changePassword": "Change password",
       "setup2fa": "Set up 2FA"
     },
-
     "subscription": {
       "title": "Subscription Plan",
       "description": "View or manage your current plan",
@@ -214,20 +207,17 @@
       "month": "month",
       "manage": "Manage Plan"
     },
-
     "data": {
       "title": "Account & Data",
       "description": "Manage your account or delete it permanently",
       "delete": "Delete Account",
       "deleteWarning": "Account deletion feature is under development"
     },
-
     "logout": {
       "button": "Sign Out",
       "success": "Logged out successfully",
       "fail": "Failed to log out:"
     },
-
     "toast": {
       "profileUpdated": "Profile updated successfully",
       "upgraded": "Thank you for upgrading your plan! 🎉"

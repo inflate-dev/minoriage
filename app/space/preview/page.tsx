@@ -37,15 +37,21 @@ const DUMMY_TRAJECTORY = buildDummyTrajectory();
 
 export default function ScanViewerPreviewPage() {
   return (
-    <div className="min-h-screen bg-gray-950 pb-20">
+    <div className="min-h-screen bg-[#030712] pb-20">
       <div className="max-w-5xl mx-auto px-4 py-6">
-        <div className="mb-4 text-white">
-          <h1 className="text-lg font-bold">3D空間ビュー プレビュー（ダミーデータ）</h1>
-          <p className="text-sm text-gray-400">
-            Supabase/Jetsonには接続していません。ScanViewerの見た目・操作確認用です。
+        <div className="mb-5 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl font-bold text-zinc-100">3D空間ビュー</h1>
+            <span className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full border border-[rgba(245,165,36,0.35)] bg-[rgba(245,165,36,0.12)] px-2.5 py-[3px]">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#f5a524]" />
+              <span className="text-[11px] font-medium text-[#f5a524]">PREVIEW · ダミーデータ</span>
+            </span>
+          </div>
+          <p className="text-xs text-zinc-500">
+            Supabase / Jetson 未接続 — ScanViewer の見た目・操作確認用
           </p>
         </div>
-        <Card className="border-gray-800">
+        <Card className="border-white/[0.08] bg-[#0c1019]">
           <CardContent className="p-0">
             <div className="h-[80vh] rounded-lg overflow-hidden">
               <ScanViewer

@@ -29,7 +29,6 @@ export type TrendPoint = {
 
 export type AreaStat = {
   id: string;
-  name: string;
   detectedThisSeason: number;
   yoyChangePercent: number;
   coloredRatio: number;
@@ -44,7 +43,6 @@ export type ActionItem = {
   id: string;
   type: ActionType;
   areaId: string;
-  areaName: string;
   severity: ActionSeverity;
   coloredRatio?: number;
   yoyChangePercent?: number;
@@ -126,10 +124,10 @@ export function getDashboardData(): DashboardData {
   const coloringPaceDeltaDays = 4;
 
   const areas: AreaStat[] = [
-    { id: 'area-1', name: '第1圃場', detectedThisSeason: 1820, yoyChangePercent: 12, coloredRatio: 0.86, daysToHarvestEstimate: 6 },
-    { id: 'area-2', name: '第2圃場', detectedThisSeason: 1340, yoyChangePercent: -34, coloredRatio: 0.52, daysToHarvestEstimate: 21 },
-    { id: 'area-3', name: '第3圃場', detectedThisSeason: 1120, yoyChangePercent: 5, coloredRatio: 0.63, daysToHarvestEstimate: 15 },
-    { id: 'area-4', name: '第4圃場', detectedThisSeason: 920, yoyChangePercent: -8, coloredRatio: 0.35, daysToHarvestEstimate: 30 },
+    { id: 'area-1', detectedThisSeason: 1820, yoyChangePercent: 12, coloredRatio: 0.86, daysToHarvestEstimate: 6 },
+    { id: 'area-2', detectedThisSeason: 1340, yoyChangePercent: -34, coloredRatio: 0.52, daysToHarvestEstimate: 21 },
+    { id: 'area-3', detectedThisSeason: 1120, yoyChangePercent: 5, coloredRatio: 0.63, daysToHarvestEstimate: 15 },
+    { id: 'area-4', detectedThisSeason: 920, yoyChangePercent: -8, coloredRatio: 0.35, daysToHarvestEstimate: 30 },
   ];
 
   const actions: ActionItem[] = [];
@@ -139,7 +137,6 @@ export function getDashboardData(): DashboardData {
         id: `harvest-${area.id}`,
         type: 'harvest_recommend',
         areaId: area.id,
-        areaName: area.name,
         severity: 'success',
         coloredRatio: area.coloredRatio,
       });
@@ -149,7 +146,6 @@ export function getDashboardData(): DashboardData {
         id: `anomaly-${area.id}`,
         type: 'anomaly',
         areaId: area.id,
-        areaName: area.name,
         severity: 'danger',
         yoyChangePercent: area.yoyChangePercent,
       });

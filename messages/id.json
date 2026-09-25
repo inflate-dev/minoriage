@@ -35,7 +35,7 @@
     "placeholderEmail": "email@anda.com",
     "enterPassword": "Masukkan kata sandi Anda",
     "enterConfirmPassword": "Masukkan konfirmasi kata sandi"
-  }, 
+  },
   "camera": {
     "title": "Pindai Ruang",
     "startCameraError": "Gagal mengaktifkan kamera",
@@ -76,31 +76,35 @@
     "viewer": {
       "badge": "SFM + YOLO FUSION",
       "pointCount": "Titik",
-      "cameraCount": "Sudut Kamera",
-      "detectedTotal": "Barang Terdeteksi",
-      "multiView": "Terkonfirmasi (multi-sudut)",
-      "singleView": "Hanya satu sudut",
-      "settingsTitle": "Pengaturan Tampilan",
-      "trajectoryToggle": "Jalur kamera",
-      "singleViewToggle": "Barang sudut tunggal",
+      "itemsLabel": "Barang",
+      "layersTitle": "LAPISAN",
+      "layerDensePointCloud": "Titik awan padat",
+      "layerDensePointCloudSub": "MVS",
+      "layerCameraTrajectory": "Jalur kamera",
+      "layerConfirmed": "Terkonfirmasi",
+      "layerConfirmedSub": "2+ sudut",
+      "layerSingleView": "Hanya satu sudut",
+      "layerSingleViewSub": "1 sudut",
+      "displayTitle": "TAMPILAN",
       "pointSize": "Ukuran titik",
+      "floorGrid": "Kisi lantai",
+      "viewFit": "Sesuaikan",
+      "viewTop": "Atas",
+      "viewFront": "Depan",
+      "viewSide": "Samping",
+      "flipLabel": "Balik",
       "flipButton": "Balik atas-bawah",
       "hints": "drag: putar / scroll: zoom / shift+drag: geser. Arahkan kursor ke barang untuk detail, klik untuk fokus.",
-      "legendPoints": "Titik awan padat (MVS)",
-      "legendTrajectory": "Jalur kamera",
-      "legendMultiView": "Barang (2+ sudut)",
-      "legendSingleView": "Barang (1 sudut saja)",
+      "togglePanel": "Alihkan {panel}",
       "tooltipViewCount": "terlihat dari {count} sudut"
     }
   },
-
   "dashboard": {
     "headerTitle": "Dasbor",
-    "title": "Dasbor Kesemek",
+    "title": "Dasbor",
     "description": "Pantau status deteksi musim ini berdasarkan jumlah hari sejak berbunga.",
     "error": "Terjadi kesalahan",
     "loading": "Memuat...",
-
     "summary": {
       "totalDetected": "Terdeteksi Musim Ini",
       "totalDetectedUnit": "",
@@ -114,7 +118,12 @@
       "alertCount": "Peringatan Perlu Ditinjau",
       "alertCountUnit": ""
     },
-
+    "areas": {
+      "field1": "Kebun 1",
+      "field2": "Kebun 2",
+      "field3": "Kebun 3",
+      "field4": "Kebun 4"
+    },
     "trend": {
       "title": "Tren Deteksi (Tahun-ke-Tahun)",
       "xAxisLabel": "Hari Sejak Berbunga",
@@ -131,7 +140,6 @@
         "harvest": "Panen"
       }
     },
-
     "actions": {
       "title": "Tindakan Berikutnya",
       "empty": "Saat ini tidak ada peringatan yang perlu ditinjau",
@@ -145,37 +153,24 @@
       "detailColoredRatio": "Rasio buah berwarna"
     }
   },
-
   "settings": {
     "title": "Pengaturan",
     "detection": {
       "title": "Pengaturan Deteksi",
       "description": "Atur fungsi deteksi barang",
-      "modeLabel": "Mode Deteksi Barang",
-      "modeHint": "Pilih metode untuk mendeteksi dan menghitung barang dari gambar yang diambil.",
-      "aiMode": "Mode AI",
-      "apiMode": "Mode chatGPT",
-      "refMode": "Mode Referensi",
       "highAccuracy": "Mode Akurasi Tinggi",
       "highAccuracyHint": "Ambil gambar dengan resolusi tinggi untuk hasil yang lebih akurat",
       "threshold": "Ambang Batas",
       "thresholdHint": "Tingkat keyakinan untuk deteksi (0.1–1.0)",
       "maxDetections": "Deteksi Maksimum",
-      "maxDetectionsHint": "Jumlah maksimum jenis barang yang diproses per deteksi",
-      "uploadSuccess": "Gambar sampel berhasil diunggah!",
-      "uploadFail": "Gagal mengunggah gambar",
-      "uploadWarning": "Tidak ada URL gambar yang dikembalikan",
-      "uploadLimit": "Ukuran gambar melebihi batas 5MB",
-      "uploadType": "Hanya file gambar JPG yang diperbolehkan"
+      "maxDetectionsHint": "Jumlah maksimum jenis barang yang diproses per deteksi"
     },
-
     "data": {
       "title": "Pengaturan Data",
       "description": "Kelola penyimpanan dan sinkronisasi data",
       "autoSave": "Simpan Otomatis",
       "autoSaveHint": "Simpan hasil deteksi ke database secara otomatis"
     },
-
     "system": {
       "title": "Info Sistem",
       "description": "Status aplikasi dan perangkat",
@@ -185,14 +180,11 @@
       "lastSync": "Sinkronisasi Terakhir",
       "storage": "Penggunaan Penyimpanan"
     },
-
     "saveBtn": "Simpan Pengaturan",
     "saveSuccess": "Pengaturan berhasil disimpan"
   },
-
   "account": {
     "title": "Pengaturan Akun",
-
     "profile": {
       "title": "Informasi Pribadi",
       "edit": "Edit",
@@ -202,14 +194,12 @@
       "email": "Email",
       "joined": "Bergabung"
     },
-
     "security": {
       "title": "Pengaturan Keamanan",
       "description": "Kelola kata sandi dan autentikasi dua faktor Anda",
       "changePassword": "Ubah Kata Sandi",
       "setup2fa": "Atur 2FA"
     },
-
     "subscription": {
       "title": "Paket Langganan",
       "description": "Lihat atau kelola paket langganan Anda saat ini",
@@ -217,20 +207,17 @@
       "month": "bulan",
       "manage": "Kelola Paket"
     },
-
     "data": {
       "title": "Akun & Data",
       "description": "Kelola akun Anda atau hapus secara permanen",
       "delete": "Hapus Akun",
       "deleteWarning": "Fitur penghapusan akun sedang dalam pengembangan"
     },
-
     "logout": {
       "button": "Keluar",
       "success": "Berhasil keluar",
       "fail": "Gagal keluar"
     },
-
     "toast": {
       "profileUpdated": "Profil berhasil diperbarui",
       "upgraded": "Terima kasih telah meningkatkan paket Anda! 🎉"
