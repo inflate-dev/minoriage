@@ -74,7 +74,7 @@
     "loadError": "Failed to load scan data",
     "backToHistory": "Back to history",
     "viewer": {
-      "badge": "SFM + YOLO FUSION",
+      "badge": "DetSfM",
       "pointCount": "Points",
       "itemsLabel": "Items",
       "layersTitle": "LAYERS",

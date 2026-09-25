@@ -74,7 +74,7 @@
     "loadError": "スキャンデータの読み込みに失敗しました",
     "backToHistory": "履歴に戻る",
     "viewer": {
-      "badge": "SFM + YOLO FUSION",
+      "badge": "DetSfM",
       "pointCount": "点群",
       "itemsLabel": "個数",
       "layersTitle": "レイヤー",
